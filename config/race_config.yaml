@@ -1,0 +1,33 @@
+# ============================================================
+# Target Race Configuration
+# Change these values to run the pipeline for a different GP.
+# ============================================================
+
+target:
+  gp_name: "Spanish Grand Prix"      # Official name in the API
+  year: 2026
+  round: 14
+  circuit_id: "madring"
+  race_date: "2026-09-13"
+  qualifying_date: "2026-09-12"
+
+# Historical data window to download (inclusive)
+history:
+  start_year: 2018
+  end_year: 2026          # includes the partial target season
+
+# Walk-forward validation seasons (exclusive of test)
+validation:
+  walk_forward_start: 2021
+  walk_forward_end: 2025    # last validation season (inclusive)
+  test_season: 2025
+
+# Historical windows to compare [label: start_year]
+windows:
+  "3yr":  2023
+  "5yr":  2021
+  "7yr":  2019
+  "all":  2018
+
+# Random seed for reproducibility
+random_seed: 42

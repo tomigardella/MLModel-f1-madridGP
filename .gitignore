@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data — raw API responses (reproducible via pipeline)
+data/raw/
+
+# Models — regenerated via pipeline
+models/*.pkl
+models/*.json
+models/*.txt
+
+# Reports — regenerated via pipeline
+reports/figures/*.png
+reports/figures/*.svg
+
+# FastF1 cache
+.fastf1_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Secrets
+*.env
+.env
