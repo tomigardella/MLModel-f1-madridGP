@@ -141,3 +141,4 @@ def build_qualifying_features(qualifying: pd.DataFrame) -> pd.DataFrame:
     q = _add_historical_qualifying_features(q)
 
     return q[QUALIFYING_FEATURE_COLUMNS]
+

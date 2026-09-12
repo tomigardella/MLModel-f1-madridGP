@@ -145,3 +145,4 @@ if __name__ == "__main__":
     path = save_processed_qualifying(df)
     print(f"Saved {len(df)} qualifying rows → {path}")
     print(df[["season", "round", "driver_id", "qualifying_position", "best_qualifying_time_sec"]].head(20))
+

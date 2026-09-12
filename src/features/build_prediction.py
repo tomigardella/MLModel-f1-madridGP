@@ -125,3 +125,4 @@ if __name__ == "__main__":
     path = save_target_features(target)
     print(f"Saved {len(target)} target rows → {path}")
     print(target[["driver_id", "constructor_id", "qualifying_position", "gap_to_pole_sec"]].to_string(index=False))
+

@@ -197,3 +197,4 @@ def get_model_builders(feature_columns: list[str]) -> dict[str, Pipeline]:
     if _HAS_CAT:
         builders["catboost"] = build_catboost(feature_columns)
     return builders
+

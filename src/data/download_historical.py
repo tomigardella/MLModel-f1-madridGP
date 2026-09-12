@@ -31,6 +31,7 @@ def fetch_json(url: str, retries: int = 3) -> dict:
     """Fetch one Jolpica API response, retrying on transient errors."""
     for attempt in range(1, retries + 1):
         try:
+            time.sleep(0.5)  # polite rate-limiting: Jolpica allows ~2 req/s
             with urlopen(url, timeout=30) as response:
                 return json.load(response)
         except (HTTPError, URLError) as exc:
@@ -198,3 +199,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

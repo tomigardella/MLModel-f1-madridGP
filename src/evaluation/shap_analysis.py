@@ -118,3 +118,4 @@ def run_shap_analysis(
     importance_df.to_csv(out, index=False)
     print(f"Saved SHAP importance table → {out}")
     return importance_df
+

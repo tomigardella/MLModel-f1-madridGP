@@ -97,3 +97,4 @@ if __name__ == "__main__":
     print(f"\nSaved → {path}")
     print("\nMean metrics per model:")
     print(summarize_walk_forward(wf).to_string())
+

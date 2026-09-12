@@ -249,3 +249,4 @@ def build_race_features(results: pd.DataFrame) -> pd.DataFrame:
     df = _constructor_features(df, race_totals)
 
     return df[RACE_FEATURE_COLUMNS]
+

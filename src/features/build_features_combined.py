@@ -134,3 +134,4 @@ if __name__ == "__main__":
     print(f"Saved {len(features)} combined rows → {path}")
     print(f"Qualifying coverage: {features['qualifying_position'].notna().mean():.1%} of races")
     print(f"Feature columns: {len(MODEL_FEATURE_COLUMNS)}")
+

@@ -80,3 +80,4 @@ if __name__ == "__main__":
     print(summary.to_string(index=False))
     best = best_window(summary)
     print(f"\nSelected window: {best}")
+

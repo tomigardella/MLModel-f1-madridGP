@@ -101,3 +101,4 @@ def predict_race_probabilities(
     total = raw_probas.sum()
     result["win_probability"] = raw_probas / total if total > 0 else raw_probas
     return result.sort_values("win_probability", ascending=False).reset_index(drop=True)
+

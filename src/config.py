@@ -31,3 +31,4 @@ EXTERNAL_DIR = PROJECT_ROOT / "data" / "external"
 MODEL_DIR = PROJECT_ROOT / "models"
 REPORT_DIR = PROJECT_ROOT / "reports"
 FIGURES_DIR = REPORT_DIR / "figures"
+

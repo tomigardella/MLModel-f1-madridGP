@@ -104,3 +104,4 @@ if __name__ == "__main__":
     df = load_results(seasons)
     path = save_processed_results(df)
     print(f"Saved {len(df)} rows → {path}")
+
