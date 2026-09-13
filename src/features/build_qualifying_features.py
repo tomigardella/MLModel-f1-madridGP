@@ -1,19 +1,19 @@
-"""Build qualifying-derived features for every (season, round, driver).
+"""Construye características derivadas de la clasificación para cada (season, round, driver).
 
-This module is the CENTRAL CONTRIBUTION of this project relative to the
-previous Dutch GP model.  Instead of using `grid_position` extracted from
-race results (which can conflate qualifying position with grid penalties and
-has an ambiguous data lineage), we build features directly from the
-qualifying results endpoint.
+Este módulo es la CONTRIBUCIÓN CENTRAL de este proyecto respecto al
+modelo anterior del GP de los Países Bajos. En lugar de usar `grid_position` extraído de
+los resultados de la carrera (lo cual puede confundir la posición de clasificación con penalizaciones en la parrilla y
+tiene un linaje de datos ambiguo), construimos características directamente a partir del
+endpoint de resultados de clasificación.
 
-Anti-leakage contract
----------------------
-For any race X:
-  - The TARGET qualifying features (qualifying_position, gap_to_pole_sec, etc.)
-    use the qualifying SESSION of race X itself — held on Saturday before Sunday's race.
-    These are pre-race information and are safe to use.
-  - The HISTORICAL qualifying features (driver_avg_qualifying_last_N, etc.)
-    use only qualifying sessions BEFORE race X (via shift(1) + rolling).
+Contrato anti-fuga (anti-leakage)
+---------------------------------
+Para cualquier carrera X:
+  - Las características de clasificación del EVENTO ACTUAL (qualifying_position, gap_to_pole_sec, etc.)
+    utilizan la SESIÓN de clasificación de la propia carrera X — celebrada el sábado antes de la carrera del domingo.
+    Estas representan información pre-carrera y su uso es seguro.
+  - Las características de clasificación HISTÓRICAS (driver_avg_qualifying_last_N, etc.)
+    utilizan únicamente sesiones de clasificación ANTERIORES a la carrera X (mediante shift(1) + rolling).
 """
 
 from __future__ import annotations
@@ -22,11 +22,11 @@ import pandas as pd
 
 
 # ---------------------------------------------------------------------------
-# Current-race qualifying features
+# Características de clasificación de la carrera actual
 # ---------------------------------------------------------------------------
 
 def _add_gap_to_pole(q: pd.DataFrame) -> pd.DataFrame:
-    """Add gap in seconds to the pole-sitter time for each race."""
+    """Agrega la diferencia en segundos con respecto al tiempo de la pole position para cada carrera."""
     pole_times = (
         q[q["qualifying_position"] == 1]
         .groupby(["season", "round"])["best_qualifying_time_sec"]
@@ -41,7 +41,7 @@ def _add_gap_to_pole(q: pd.DataFrame) -> pd.DataFrame:
 
 
 def _add_teammate_gap(q: pd.DataFrame) -> pd.DataFrame:
-    """Add gap to best-qualifying teammate for each driver."""
+    """Agrega la diferencia con respecto al compañero de equipo mejor clasificado para cada piloto."""
     team_best = (
         q.groupby(["season", "round", "constructor_id"])["best_qualifying_time_sec"]
         .min()
@@ -56,7 +56,7 @@ def _add_teammate_gap(q: pd.DataFrame) -> pd.DataFrame:
     )
     q = q.merge(team_best, on=["season", "round", "constructor_id"], how="left")
     q = q.merge(team_best_pos, on=["season", "round", "constructor_id"], how="left")
-    # gap > 0 means slower than teammate; 0 for the fastest teammate
+    # una diferencia > 0 significa más lento que el compañero; 0 para el compañero más rápido
     q["driver_vs_teammate_q_gap_sec"] = (
         q["best_qualifying_time_sec"] - q["team_best_q_time_sec"]
     )
@@ -65,18 +65,18 @@ def _add_teammate_gap(q: pd.DataFrame) -> pd.DataFrame:
 
 
 def _add_qualifying_session_numeric(q: pd.DataFrame) -> pd.DataFrame:
-    """Encode qualifying session reached as an ordinal integer."""
+    """Codifica la sesión de clasificación alcanzada como un entero ordinal."""
     session_map = {"Q1": 1, "Q2": 2, "Q3": 3}
     q["qualifying_session_numeric"] = q["qualifying_session_reached"].map(session_map)
     return q
 
 
 # ---------------------------------------------------------------------------
-# Historical qualifying features (rolling, shifted)
+# Características históricas de clasificación (móviles, desplazadas)
 # ---------------------------------------------------------------------------
 
 def _add_historical_qualifying_features(q: pd.DataFrame) -> pd.DataFrame:
-    """Rolling qualifying position stats, strictly using past sessions only."""
+    """Estadísticas móviles de posición de clasificación, utilizando estrictamente solo sesiones pasadas."""
     q = q.sort_values(["race_date", "season", "round", "driver_id"]).reset_index(drop=True)
     g = q.groupby("driver_id", sort=False)
 
@@ -88,7 +88,7 @@ def _add_historical_qualifying_features(q: pd.DataFrame) -> pd.DataFrame:
             lambda s, n=n: s.shift(1).rolling(n, min_periods=1).mean()
         )
 
-    # Season qualifying average
+    # Promedio de clasificación en la temporada
     sg = q.groupby(["season", "driver_id"], sort=False)
     q["driver_season_avg_qualifying_before"] = sg["qualifying_position"].transform(
         lambda s: s.expanding().mean().shift(1)
@@ -97,13 +97,13 @@ def _add_historical_qualifying_features(q: pd.DataFrame) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# Master builder
+# Constructor principal
 # ---------------------------------------------------------------------------
 
 QUALIFYING_FEATURE_COLUMNS = [
-    # Keys
+    # Claves
     "season", "round", "driver_id",
-    # Current qualifying (pre-race, Saturday)
+    # Clasificación actual (pre-carrera, sábado)
     "qualifying_position",
     "best_qualifying_time_sec",
     "q1_time_sec",
@@ -114,7 +114,7 @@ QUALIFYING_FEATURE_COLUMNS = [
     "gap_to_pole_sec",
     "driver_vs_teammate_q_gap_sec",
     "team_best_qualifying_pos",
-    # Historical qualifying form
+    # Rendimiento histórico en clasificación
     "driver_avg_qualifying_last_3",
     "driver_avg_qualifying_last_5",
     "driver_avg_q_gap_to_pole_last_3",
@@ -124,12 +124,12 @@ QUALIFYING_FEATURE_COLUMNS = [
 
 
 def build_qualifying_features(qualifying: pd.DataFrame) -> pd.DataFrame:
-    """Return one row per (season, round, driver) with qualifying features.
+    """Devuelve una fila por (season, round, driver) con características de clasificación.
 
-    Parameters
+    Parámetros
     ----------
     qualifying:
-        Normalized qualifying data from load_qualifying().
+        Datos normalizados de clasificación provenientes de load_qualifying().
     """
     q = qualifying.copy()
     q["race_date"] = pd.to_datetime(q["race_date"])

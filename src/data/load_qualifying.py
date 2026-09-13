@@ -1,12 +1,12 @@
-"""Load and normalize Formula 1 qualifying results from Jolpica JSON files.
+"""Carga y normaliza los resultados de clasificación de Fórmula 1 a partir de archivos JSON de Jolpica.
 
-Qualifying data is the *new core feature source* of this project.
-Each row represents one driver's best time in each qualifying session.
+Los datos de clasificación son la *nueva fuente principal de características* de este proyecto.
+Cada fila representa el mejor tiempo de un piloto en cada sesión de clasificación.
 
-Anti-leakage note
------------------
-These data are collected AFTER qualifying on Saturday but BEFORE the race
-on Sunday.  They are pre-race information and are safe to use as features.
+Nota anti-filtración (anti-leakage)
+-----------------------------------
+Estos datos se recopilan DESPUÉS de la clasificación del sábado pero ANTES de la carrera
+del domingo. Son información previa a la carrera y es seguro utilizarlos como características (features).
 """
 
 from __future__ import annotations
@@ -28,11 +28,11 @@ QUALIFYING_COLUMNS = [
     "driver_id",
     "driver_code",
     "constructor_id",
-    "qualifying_position",      # final Q classification position (1-based)
-    "q1_time_sec",              # Q1 lap time in seconds (float) or NaN
-    "q2_time_sec",              # Q2 lap time in seconds (float) or NaN
-    "q3_time_sec",              # Q3 lap time in seconds (float) or NaN
-    "best_qualifying_time_sec", # best time across Q1/Q2/Q3 (usually Q3 for top-10)
+    "qualifying_position",      # posición final de clasificación Q (base 1)
+    "q1_time_sec",              # tiempo de vuelta en Q1 en segundos (float) o NaN
+    "q2_time_sec",              # tiempo de vuelta en Q2 en segundos (float) o NaN
+    "q3_time_sec",              # tiempo de vuelta en Q3 en segundos (float) o NaN
+    "best_qualifying_time_sec", # mejor tiempo entre Q1/Q2/Q3 (usualmente Q3 para top 10)
     "qualifying_session_reached",  # "Q1" / "Q2" / "Q3"
 ]
 
@@ -42,7 +42,7 @@ _TIME_RE = re.compile(r"^(\d+):(\d+\.\d+)$")
 
 
 def _parse_lap_time(raw: str | None) -> float | None:
-    """Convert 'M:SS.sss' string to total seconds, or return None."""
+    """Convierte la cadena 'M:SS.sss' a segundos totales, o devuelve None."""
     if not raw:
         return None
     m = _TIME_RE.match(raw.strip())
@@ -53,7 +53,7 @@ def _parse_lap_time(raw: str | None) -> float | None:
 
 
 def _normalize_qualifying(race: dict, result: dict) -> dict:
-    """Flatten one Jolpica qualifying result into a plain dict."""
+    """Aplana un resultado de clasificación de Jolpica en un dict plano."""
     q1 = _parse_lap_time(result.get("Q1"))
     q2 = _parse_lap_time(result.get("Q2"))
     q3 = _parse_lap_time(result.get("Q3"))
@@ -87,29 +87,56 @@ def _normalize_qualifying(race: dict, result: dict) -> dict:
 
 
 def _qualifying_files(season: int) -> list[Path]:
-    """Return all qualifying JSON pages for *season*."""
+    """Devuelve las páginas JSON de clasificación para la temporada (*season*).
+
+    Los archivos de rondas individuales (round_XX_qualifying.json) tienen prioridad sobre
+    los archivos paginados con offset, ya que las páginas con offset pueden dividir una ronda
+    entre páginas, causando datos incompletos para la última ronda de una página.
+    """
     q_dir = RAW_DIR / str(season) / "qualifying"
-    # Season-wide pages
+    individual = sorted(q_dir.glob("round_*_qualifying.json"))
+    individual_rounds = set()
+    for p in individual:
+        # Extrae el número de ronda del nombre de archivo: round_14_qualifying.json -> 14
+        try:
+            individual_rounds.add(int(p.stem.split("_")[1]))
+        except (IndexError, ValueError):
+            pass
+
     pages = sorted(q_dir.glob("qualifying_offset_*.json"))
-    # Target-round individual files
-    pages += sorted(q_dir.glob("round_*_qualifying.json"))
-    return pages
+    return individual, pages, individual_rounds
 
 
 def load_qualifying(seasons: list[int]) -> pd.DataFrame:
-    """Load, normalize and deduplicate qualifying results for the given seasons.
+    """Carga, normaliza y desduplica los resultados de clasificación para las temporadas dadas.
 
-    Returns
+    Los archivos de rondas individuales (round_XX_qualifying.json) tienen prioridad sobre
+    los archivos paginados con offset, asegurando datos completos por ronda.
+
+    Retorna
     -------
     pd.DataFrame
-        One row per (season, round, driver), sorted chronologically.
-        Missing qualifying sessions (some older years) are NaN.
+        Una fila por (temporada, ronda, piloto), ordenada cronológicamente.
+        Las sesiones de clasificación faltantes (algunos años anteriores) son NaN.
     """
     records: list[dict] = []
-    seen_rounds: set[tuple] = set()  # (season, round) already loaded
+    seen_rounds: set[tuple] = set()  # (season, round) ya cargadas completamente
 
     for season in seasons:
-        for path in _qualifying_files(season):
+        individual_files, offset_files, individual_rounds = _qualifying_files(season)
+
+        # Paso 1: Procesar primero los archivos de rondas individuales (máxima prioridad)
+        for path in individual_files:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            for race in payload["MRData"]["RaceTable"].get("Races", []):
+                key = (int(race["season"]), int(race["round"]))
+                for result in race.get("QualifyingResults", []):
+                    records.append(_normalize_qualifying(race, result))
+                if race.get("QualifyingResults"):
+                    seen_rounds.add(key)
+
+        # Paso 2: Procesar páginas con offset, omitir rondas ya cargadas desde archivos individuales
+        for path in offset_files:
             payload = json.loads(path.read_text(encoding="utf-8"))
             for race in payload["MRData"]["RaceTable"].get("Races", []):
                 key = (int(race["season"]), int(race["round"]))
@@ -131,7 +158,7 @@ def load_qualifying(seasons: list[int]) -> pd.DataFrame:
 
 
 def save_processed_qualifying(qualifying: pd.DataFrame) -> Path:
-    """Save normalized qualifying data to the processed directory."""
+    """Guarda los datos de clasificación normalizados en el directorio de datos procesados."""
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     out = PROCESSED_DIR / "qualifying_results.csv"
     qualifying.to_csv(out, index=False)
@@ -143,6 +170,6 @@ if __name__ == "__main__":
     seasons = list(range(HISTORY["start_year"], HISTORY["end_year"] + 1))
     df = load_qualifying(seasons)
     path = save_processed_qualifying(df)
-    print(f"Saved {len(df)} qualifying rows → {path}")
+    print(f"Saved {len(df)} qualifying rows -> {path}")
     print(df[["season", "round", "driver_id", "qualifying_position", "best_qualifying_time_sec"]].head(20))
 

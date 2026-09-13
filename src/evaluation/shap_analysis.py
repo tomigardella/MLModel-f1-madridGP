@@ -1,11 +1,11 @@
-"""SHAP-based interpretability analysis for the winning model.
+"""Análisis de interpretabilidad basado en SHAP para el modelo ganador.
 
-Answers: "Why does the model predict this driver has a high chance of winning?"
+Responde: "¿Por qué el modelo predice que este piloto tiene una alta probabilidad de ganar?"
 
-Generates:
-  - SHAP summary plot (feature importance across all predictions)
-  - SHAP waterfall plot for individual drivers
-  - Feature importance table
+Genera:
+  - Gráfico resumen de SHAP (importancia de características en todas las predicciones)
+  - Gráfico de cascada (waterfall) de SHAP para pilotos individuales
+  - Tabla de importancia de características
 """
 
 from __future__ import annotations
@@ -20,17 +20,17 @@ from src.config import FIGURES_DIR, PROCESSED_DIR
 
 
 def compute_shap_values(model, X: pd.DataFrame, feature_columns: list[str]):
-    """Compute SHAP values for a fitted pipeline.
+    """Calcula los valores SHAP para un pipeline entrenado.
 
-    Handles sklearn Pipelines by extracting the preprocessed data
-    and the underlying classifier.
+    Maneja Pipelines de sklearn extrayendo los datos preprocesados
+    y el clasificador subyacente.
     """
     try:
         import shap
     except ImportError:
         raise ImportError("shap is required: pip install shap")
 
-    # Get preprocessed data
+    # Obtener datos preprocesados
     X_prep = model.named_steps["preprocessor"].transform(X[feature_columns])
 
     classifier = model.named_steps["classifier"]
@@ -43,7 +43,7 @@ def compute_shap_values(model, X: pd.DataFrame, feature_columns: list[str]):
 
     shap_values = explainer.shap_values(X_prep)
 
-    # For binary classification some models return list [class0, class1]
+    # Para clasificación binaria algunos modelos retornan una lista [class0, class1]
     if isinstance(shap_values, list):
         shap_values = shap_values[1]
 
@@ -57,7 +57,7 @@ def plot_shap_summary(
     title: str = "SHAP Feature Importance",
     save_path: Path | None = None,
 ) -> None:
-    """Bar-style SHAP summary plot (mean absolute SHAP values)."""
+    """Gráfico de barras de resumen SHAP (valores SHAP absolutos medios)."""
     try:
         import shap
     except ImportError:
@@ -85,9 +85,9 @@ def feature_importance_table(
     shap_values: np.ndarray,
     feature_names: list[str],
 ) -> pd.DataFrame:
-    """Return a DataFrame with mean absolute SHAP importance per feature."""
+    """Retorna un DataFrame con la importancia SHAP media absoluta por característica."""
     importance = np.abs(shap_values).mean(axis=0)
-    # Truncate to len(feature_names) in case imputer added indicator columns
+    # Truncar a len(feature_names) en caso de que el imputador haya agregado columnas indicadoras
     importance = importance[: len(feature_names)]
     df = pd.DataFrame({
         "feature": feature_names,
@@ -103,7 +103,7 @@ def run_shap_analysis(
     feature_columns: list[str],
     model_name: str = "model",
 ) -> pd.DataFrame:
-    """Full SHAP analysis pipeline — computes values, plots, saves table."""
+    """Pipeline completo de análisis SHAP: calcula valores, genera gráficos y guarda la tabla."""
     print(f"Computing SHAP values for {model_name}…")
     shap_values, X_prep = compute_shap_values(model, test_data, feature_columns)
 

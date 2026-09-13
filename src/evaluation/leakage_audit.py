@@ -1,12 +1,12 @@
-"""Data leakage audit for the F1 prediction pipeline.
+"""Auditoría de fuga de datos (data leakage) para el pipeline de predicción de F1.
 
-Runs a systematic check on the combined feature dataset to detect:
-  1. Features that may contain target information (won, finish_position, etc.)
-  2. Features calculated using current-race data instead of shifted history
-  3. Qualifying features mistakenly populated for the target race (should be OK)
-  4. Any unexpectedly high correlation with the target variable
+Ejecuta una verificación sistemática en el dataset de características combinadas para detectar:
+  1. Características que puedan contener información del objetivo (won, finish_position, etc.)
+  2. Características calculadas usando datos de la carrera actual en lugar de historial desplazado
+  3. Características de clasificación erróneamente pobladas para la carrera objetivo (debería ser correcto)
+  4. Cualquier correlación inesperadamente alta con la variable objetivo
 
-Outputs a human-readable audit table.
+Genera una tabla de auditoría legible por humanos.
 """
 
 from __future__ import annotations
@@ -18,12 +18,12 @@ from src.features.build_features_combined import MODEL_FEATURE_COLUMNS
 
 
 # ---------------------------------------------------------------------------
-# Feature audit catalog
+# Catálogo de auditoría de características
 # ---------------------------------------------------------------------------
 
-# Each entry: (feature_name, available_before_race, leakage_risk, decision, notes)
+# Cada entrada: (feature_name, available_before_race, leakage_risk, decision, notes)
 FEATURE_AUDIT = [
-    # --- Race history features ---
+    # --- Características del historial de carreras ---
     ("driver_career_starts_before",       True,  "None",     "Include", "Cumsum shifted by 1"),
     ("driver_career_wins_before",          True,  "None",     "Include", "Cumsum shifted by 1"),
     ("driver_career_points_before",        True,  "None",     "Include", "Cumsum shifted by 1"),
@@ -55,7 +55,7 @@ FEATURE_AUDIT = [
     ("constructor_season_points_before",   True,  "None",     "Include", "Cumsum shifted within season"),
     ("constructor_season_wins_before",     True,  "None",     "Include", "Cumsum shifted within season"),
     ("constructor_season_position_before", True,  "None",     "Include", "Derived from season_points_before"),
-    # --- Qualifying features (new) ---
+    # --- Características de clasificación (nuevas) ---
     ("qualifying_position",               True,  "None",     "Include", "From Saturday qualifying — pre-race"),
     ("gap_to_pole_sec",                    True,  "None",     "Include", "Derived from qualifying times only"),
     ("driver_vs_teammate_q_gap_sec",       True,  "None",     "Include", "Both times from same qualifying session"),
@@ -80,7 +80,7 @@ FORBIDDEN_FEATURES = [
 
 
 def run_leakage_audit(features: pd.DataFrame) -> pd.DataFrame:
-    """Run the leakage audit and return an audit table."""
+    """Ejecuta la auditoría de fuga de datos y retorna una tabla de auditoría."""
     audit_rows = []
     for feat, available, risk, decision, notes in FEATURE_AUDIT:
         if feat not in features.columns:
@@ -100,7 +100,7 @@ def run_leakage_audit(features: pd.DataFrame) -> pd.DataFrame:
             "status": status,
         })
 
-    # Check that forbidden columns are NOT in MODEL_FEATURE_COLUMNS
+    # Verificar que las columnas prohibidas NO estén en MODEL_FEATURE_COLUMNS
     for col in FORBIDDEN_FEATURES:
         if col in MODEL_FEATURE_COLUMNS:
             audit_rows.append({
@@ -116,7 +116,7 @@ def run_leakage_audit(features: pd.DataFrame) -> pd.DataFrame:
 
 
 def print_audit(audit: pd.DataFrame) -> None:
-    """Print audit results and highlight any issues."""
+    """Imprime los resultados de la auditoría y resalta cualquier problema."""
     print("\n" + "=" * 80)
     print("DATA LEAKAGE AUDIT")
     print("=" * 80)

@@ -1,14 +1,14 @@
-"""Model registry — defines all candidate models as sklearn-compatible pipelines.
+"""Registro de modelos — define todos los modelos candidatos como pipelines compatibles con sklearn.
 
-Every model:
-  - Uses median imputation for missing values (qualifying coverage < 100%)
-  - Uses a MissingIndicator to let the model learn from the pattern of missingness
-  - Is reproducible via the global random seed
+Cada modelo:
+  - Utiliza imputación por mediana para valores faltantes (cobertura de clasificación < 100%)
+  - Utiliza un MissingIndicator para permitir que el modelo aprenda del patrón de valores faltantes
+  - Es reproducible mediante la semilla aleatoria global
 
-Adding a new model
-------------------
-1. Define a `build_<name>()` function returning an sklearn Pipeline.
-2. Add it to MODEL_BUILDERS dict at the bottom.
+Agregar un nuevo modelo
+-----------------------
+1. Definir una función `build_<name>()` que retorne un Pipeline de sklearn.
+2. Agregarlo al diccionario de constructores en la parte inferior.
 """
 
 from __future__ import annotations
@@ -43,11 +43,11 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
-# Shared preprocessing
+# Preprocesamiento compartido
 # ---------------------------------------------------------------------------
 
 def _numeric_preprocessor(feature_columns: list[str]) -> ColumnTransformer:
-    """Median imputation + missing indicator + standard scaling."""
+    """Imputación por mediana + indicador de faltantes + escalado estándar."""
     numeric_pipeline = Pipeline([
         ("imputer", SimpleImputer(strategy="median", add_indicator=True)),
         ("scaler", StandardScaler()),
@@ -59,7 +59,7 @@ def _numeric_preprocessor(feature_columns: list[str]) -> ColumnTransformer:
 
 
 def _tree_preprocessor(feature_columns: list[str]) -> ColumnTransformer:
-    """Median imputation + missing indicator (no scaling — trees don't need it)."""
+    """Imputación por mediana + indicador de faltantes (sin escalado — los árboles no lo necesitan)."""
     numeric_pipeline = Pipeline([
         ("imputer", SimpleImputer(strategy="median", add_indicator=True)),
     ])
@@ -70,11 +70,11 @@ def _tree_preprocessor(feature_columns: list[str]) -> ColumnTransformer:
 
 
 # ---------------------------------------------------------------------------
-# Individual model builders
+# Constructores de modelos individuales
 # ---------------------------------------------------------------------------
 
 def build_logistic_regression(feature_columns: list[str]) -> Pipeline:
-    """Logistic Regression — well calibrated, interpretable baseline."""
+    """Regresión Logística — línea base bien calibrada e interpretable."""
     return Pipeline([
         ("preprocessor", _numeric_preprocessor(feature_columns)),
         ("classifier", LogisticRegression(
@@ -88,7 +88,7 @@ def build_logistic_regression(feature_columns: list[str]) -> Pipeline:
 
 
 def build_random_forest(feature_columns: list[str], n_estimators: int = 500) -> Pipeline:
-    """Random Forest — captures non-linearities, robust to small datasets."""
+    """Random Forest — captura no linealidades, robusto ante conjuntos de datos pequeños."""
     return Pipeline([
         ("preprocessor", _tree_preprocessor(feature_columns)),
         ("classifier", RandomForestClassifier(
@@ -103,7 +103,7 @@ def build_random_forest(feature_columns: list[str], n_estimators: int = 500) -> 
 
 
 def build_gradient_boosting(feature_columns: list[str]) -> Pipeline:
-    """sklearn GradientBoosting — slower but good calibration."""
+    """GradientBoosting de sklearn — más lento pero con buena calibración."""
     return Pipeline([
         ("preprocessor", _tree_preprocessor(feature_columns)),
         ("classifier", GradientBoostingClassifier(
@@ -118,7 +118,7 @@ def build_gradient_boosting(feature_columns: list[str]) -> Pipeline:
 
 
 def build_xgboost(feature_columns: list[str]) -> Pipeline:
-    """XGBoost — strong tabular performance, built-in regularization."""
+    """XGBoost — sólido rendimiento tabular, regularización incorporada."""
     if not _HAS_XGB:
         raise ImportError("xgboost is not installed. Run: pip install xgboost")
     clf = XGBClassifier(
@@ -129,7 +129,7 @@ def build_xgboost(feature_columns: list[str]) -> Pipeline:
         colsample_bytree=0.8,
         reg_alpha=0.1,
         reg_lambda=1.0,
-        scale_pos_weight=19,  # ~1/win_rate for balanced training
+        scale_pos_weight=19,  # ~1/win_rate para entrenamiento balanceado
         eval_metric="logloss",
         random_state=RANDOM_SEED,
         verbosity=0,
@@ -141,7 +141,7 @@ def build_xgboost(feature_columns: list[str]) -> Pipeline:
 
 
 def build_lightgbm(feature_columns: list[str]) -> Pipeline:
-    """LightGBM — fast gradient boosting, good for small-to-medium datasets."""
+    """LightGBM — gradient boosting rápido, adecuado para conjuntos de datos pequeños a medianos."""
     if not _HAS_LGB:
         raise ImportError("lightgbm is not installed. Run: pip install lightgbm")
     clf = LGBMClassifier(
@@ -162,7 +162,7 @@ def build_lightgbm(feature_columns: list[str]) -> Pipeline:
 
 
 def build_catboost(feature_columns: list[str]) -> Pipeline:
-    """CatBoost — often well-calibrated out of the box."""
+    """CatBoost — frecuentemente bien calibrado por defecto."""
     if not _HAS_CAT:
         raise ImportError("catboost is not installed. Run: pip install catboost")
     clf = CatBoostClassifier(
@@ -180,11 +180,11 @@ def build_catboost(feature_columns: list[str]) -> Pipeline:
 
 
 # ---------------------------------------------------------------------------
-# Registry
+# Registro
 # ---------------------------------------------------------------------------
 
 def get_model_builders(feature_columns: list[str]) -> dict[str, Pipeline]:
-    """Return all available model pipelines keyed by name."""
+    """Retorna todos los pipelines de modelos disponibles indexados por nombre."""
     builders = {
         "logistic_regression": build_logistic_regression(feature_columns),
         "random_forest": build_random_forest(feature_columns),

@@ -1,12 +1,12 @@
-"""Calibration evaluation: do predicted probabilities match observed frequencies?
+"""Evaluación de calibración: ¿las probabilidades predichas coinciden con las frecuencias observadas?
 
-In a well-calibrated model, when the model says "30% chance of winning",
-the driver wins approximately 30% of the time in similar scenarios.
+En un modelo bien calibrado, cuando el modelo indica "30% de probabilidad de ganar",
+el piloto gana aproximadamente el 30% de las veces en escenarios similares.
 
-F1 calibration is inherently challenging because:
-  - Winners are rare (~5% base rate)
-  - Sample sizes per probability bucket are small
-  - Race outcomes have high inherent randomness (safety cars, reliability, etc.)
+La calibración en la F1 es intrínsecamente desafiante debido a que:
+  - Los ganadores son raros (tasa base de ~5%)
+  - Los tamaños de muestra por intervalo de probabilidad son pequeños
+  - Los resultados de carrera tienen una alta aleatoriedad inherente (autos de seguridad, fiabilidad, etc.)
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ def calibration_table(
     probas: np.ndarray,
     n_bins: int = 5,
 ) -> pd.DataFrame:
-    """Return calibration statistics per probability bin."""
+    """Retorna estadísticas de calibración por intervalo (bin) de probabilidad."""
     data = pd.DataFrame({"label": labels.to_numpy(), "prob": probas})
     data["bin"] = pd.cut(data["prob"], bins=n_bins, labels=False, include_lowest=True)
     table = (
@@ -48,12 +48,12 @@ def plot_calibration_curves(
     title: str = "Calibration curves",
     save_path: Path | None = None,
 ) -> None:
-    """Plot calibration curves for multiple models.
+    """Grafica curvas de calibración para múltiples modelos.
 
-    Parameters
+    Parámetros
     ----------
     model_probas:
-        Dict mapping model name → (labels Series, probabilities array)
+        Diccionario que mapea nombre del modelo → (Series de etiquetas, array de probabilidades)
     """
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=(7, 6))

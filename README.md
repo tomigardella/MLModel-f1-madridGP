@@ -1,71 +1,72 @@
-# 🏎️ F1 Grand Prix Winner Prediction — Madrid 2026
+# 🏎️ Predicción del Ganador — Gran Premio de España 2026 (Madrid)
 
-> **Pre-race machine learning prediction of the 2026 Spanish Grand Prix winner**  
-> A complete end-to-end ML pipeline built for portfolio demonstration.
-
----
-
-## Project Overview
-
-This project builds a full machine learning pipeline to predict the **probability of each driver winning** the 2026 Spanish Grand Prix at the Madring circuit in Madrid.
-
-The key constraint: **only information available before the race on Sunday is used**.  
-Qualifying results from Saturday are explicitly included — the central improvement over the previous Dutch GP model.
-
-**Business Question:**  
-*"We are standing in the Madring paddock on Saturday night, after qualifying. Who has the highest probability of winning tomorrow's race?"*
+> **Pipeline de Machine Learning para predecir el ganador del Gran Premio de España 2026 (Madrid)**  
+> Proyecto de portfolio de Data Science / ML — ejecutable de extremo a extremo.
 
 ---
 
-## Key Features of This Project
+## Descripción general
 
-| Feature | Description |
+Este proyecto construye un pipeline completo de Machine Learning para predecir la **probabilidad de victoria de cada piloto** en el Gran Premio de España 2026, celebrado en el nuevo circuito Madring de Madrid.
+
+La restricción fundamental: **solo se utiliza información disponible antes del inicio de la carrera del domingo**. Los datos de clasificación del sábado se incorporan explícitamente como features — la mejora central respecto al modelo anterior del GP de Países Bajos.
+
+**Pregunta de negocio:**  
+*"Estamos en el paddock del Madring el sábado por la noche, después de la clasificación. ¿Quién tiene mayor probabilidad de ganar la carrera de mañana?"*
+
+---
+
+## Características principales del proyecto
+
+| Característica | Descripción |
 |---|---|
-| ✅ **No data leakage** | Strict temporal guard: shift(1) + cumsum pattern on all rolling features |
-| ✅ **Qualifying features** | gap_to_pole_sec, teammate gap, Q session reached — not available in the previous model |
-| ✅ **Walk-forward validation** | Expanding window across 5 validation seasons (2021–2025) |
-| ✅ **Window comparison** | 3yr / 5yr / 7yr / all — best window selected empirically |
-| ✅ **6 models compared** | LR, RF, GBT, XGBoost, LightGBM, CatBoost |
-| ✅ **Leakage audit** | Formal audit table — pipeline will not run if leakage is detected |
-| ✅ **SHAP interpretability** | Explains why the model favors specific drivers |
-| ✅ **Reproducible** | Seeds fixed, `race_config.yaml` parametrizes the whole pipeline |
-| ✅ **Reusable** | Change `circuit_id`, `round`, `year` to predict any GP |
+| ✅ **Sin fuga de datos** | Guardia temporal estricta: patrón `shift(1)` + `cumsum` en todas las features históricas |
+| ✅ **Features de clasificación** | `gap_to_pole_sec`, diferencia con compañero de equipo, sesión alcanzada — ausentes en el modelo anterior |
+| ✅ **Validación temporal walk-forward** | Ventana expandida sobre 5 temporadas de validación (2021–2025) |
+| ✅ **Comparación de ventanas históricas** | 3yr / 5yr / 7yr / todo — la mejor ventana se selecciona empíricamente |
+| ✅ **6 modelos comparados** | LR, RF, GBT, XGBoost, LightGBM, CatBoost |
+| ✅ **Auditoría de leakage** | Tabla formal — el pipeline no corre si detecta fuga de datos |
+| ✅ **Interpretabilidad SHAP** | Explica por qué el modelo favorece a determinados pilotos |
+| ✅ **Reproducible** | Semillas fijas, `race_config.yaml` parametriza todo el pipeline |
+| ✅ **Reutilizable** | Cambiar `circuit_id`, `round` y `year` permite predecir cualquier GP |
 
 ---
 
-## Project Structure
+## Estructura del proyecto
 
 ```
-f1_madrid2026/
+ModeloML_F1GP_Madrid/
 ├── config/
-│   └── race_config.yaml          # ← Single source of truth for the target GP
+│   └── race_config.yaml          # ← Única fuente de verdad para el GP objetivo
 ├── data/
-│   ├── raw/                       # API JSON responses (gitignored, reproducible)
-│   ├── processed/                 # Cleaned CSVs and features
-│   └── external/                  # Circuit metadata
+│   ├── raw/                       # Respuestas JSON de la API (en .gitignore, reproducibles)
+│   ├── processed/                 # CSVs limpios y features
+│   └── external/                  # Metadatos del circuito
 ├── src/
-│   ├── config.py                  # Central config loader
+│   ├── config.py                  # Cargador central de configuración
 │   ├── data/
-│   │   ├── download_historical.py # Jolpica API downloader
-│   │   ├── load_results.py        # Race results normalizer
-│   │   └── load_qualifying.py     # Qualifying results normalizer (NEW)
+│   │   ├── download_historical.py # Descargador de la API Jolpica
+│   │   ├── load_results.py        # Normalizador de resultados de carrera
+│   │   └── load_qualifying.py     # Normalizador de clasificación (NUEVO)
 │   ├── features/
-│   │   ├── build_race_features.py       # Historical race features
-│   │   ├── build_qualifying_features.py # Qualifying features (NEW)
-│   │   ├── build_features_combined.py   # Joined feature dataset
-│   │   └── build_prediction.py         # Target GP prediction input
+│   │   ├── build_race_features.py       # Features históricas de carrera
+│   │   ├── build_qualifying_features.py # Features de clasificación (NUEVO)
+│   │   ├── build_features_combined.py   # Dataset combinado de features
+│   │   └── build_prediction.py         # Input de predicción para el GP objetivo
 │   ├── modeling/
-│   │   ├── baseline.py            # Naïve baselines for benchmarking
-│   │   ├── model_registry.py      # All 6 model definitions
-│   │   ├── walk_forward.py        # Temporal validation
-│   │   └── window_comparison.py   # Historical window analysis
+│   │   ├── baseline.py            # Baselines naïve para comparación
+│   │   ├── model_registry.py      # Definiciones de los 6 modelos
+│   │   ├── walk_forward.py        # Validación temporal expanding window
+│   │   ├── window_comparison.py   # Análisis de ventanas históricas
+│   │   └── hyperparameter_tuning.py # Tuning con RandomizedSearchCV
 │   ├── evaluation/
 │   │   ├── metrics.py             # Log loss, Brier, AUC, winner accuracy
-│   │   ├── calibration.py         # Calibration curves
-│   │   ├── leakage_audit.py       # Formal leakage audit (mandatory gate)
-│   │   └── shap_analysis.py       # SHAP feature importance
+│   │   ├── calibration.py         # Curvas de calibración
+│   │   ├── leakage_audit.py       # Auditoría formal de fuga de datos (puerta obligatoria)
+│   │   ├── shap_analysis.py       # Importancia de features por SHAP
+│   │   └── run_evaluation.py      # Script de evaluación completa
 │   └── prediction/
-│       └── predict.py             # Final prediction runner
+│       └── predict.py             # Generador de predicción final
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb
 │   ├── 02_eda.ipynb
@@ -73,231 +74,289 @@ f1_madrid2026/
 │   ├── 04_window_comparison.ipynb
 │   ├── 05_model_comparison.ipynb
 │   └── 06_final_prediction.ipynb
-├── models/                        # Serialized fitted models
+├── models/                        # Modelos serializados (.pkl)
 ├── reports/
-│   ├── figures/                   # Charts and plots
-│   └── leakage_audit.csv
+│   ├── figures/                   # Gráficos y visualizaciones
+│   └── leakage_audit.csv          # Auditoría de fuga de datos
 ├── tests/
-├── pipeline.py                    # End-to-end orchestrator
-└── requirements.txt
+│   └── test_features.py           # Tests unitarios (8 tests)
+├── pipeline.py                    # Orquestador end-to-end
+├── generate_final_prediction.py   # Script de predicción final
+├── requirements.txt
+├── README.md                      # Este archivo (español)
+└── README_EN.md                   # English version
 ```
 
 ---
 
-## Quick Start
+## Inicio rápido
 
-### 1. Clone and set up the environment
+### 1. Clonar y configurar el entorno
 
 ```bash
-git clone <your-repo-url>
+git clone <url-del-repositorio>
 cd ModeloML_F1GP_Madrid
 
 python -m venv .venv
+
 # Windows:
 .venv\Scripts\activate
+
 # Linux/macOS:
 source .venv/bin/activate
 
 pip install -r requirements.txt
 ```
 
-### 2. Run the full pipeline
+### 2. Ejecutar el pipeline completo
 
 ```bash
 python pipeline.py
 ```
 
-This will:
-1. Download historical data (2018–2026) from the Jolpica API
-2. Download qualifying results for the Madrid GP (already available)
-3. Build all features
-4. Run baselines, walk-forward validation, and window comparison
-5. Run the leakage audit
-6. Train the best model and generate the final prediction
+Este comando:
+1. Descarga datos históricos 2018–2026 desde la API Jolpica
+2. Descarga los datos de clasificación del GP de Madrid (ya disponibles)
+3. Construye todas las features (41 features, cobertura de qualifying 93.2%)
+4. Ejecuta baselines, validación walk-forward y comparación de ventanas
+5. Ejecuta la auditoría de leakage
+6. Entrena el mejor modelo y genera la predicción final
 
-### 3. Quick prediction (using cached data)
+### 3. Predicción rápida (con datos ya descargados)
 
 ```bash
-# If you already ran the pipeline once:
+# Si ya corriste el pipeline una vez:
 python pipeline.py --skip-download
 
-# Override model and window directly:
-python pipeline.py --skip-download --model xgboost --window 2021
+# Sobrescribir modelo y ventana directamente:
+python pipeline.py --skip-download --model gradient_boosting --window 2021
+
+# Solo la predicción final:
+python generate_final_prediction.py
 ```
 
-### 4. Notebooks
+### 4. Evaluación completa
 
 ```bash
-jupyter notebook notebooks/
+python -m src.evaluation.run_evaluation --model gradient_boosting --window 2018
 ```
 
-Run notebooks in order (01 → 06) for the full analytical narrative.
+### 5. Tests unitarios
+
+```bash
+pip install pytest
+python -m pytest tests/ -v
+```
 
 ---
 
-## Data Sources
+## Fuentes de datos
 
-### Primary: Jolpica API (Ergast-compatible)
+### Principal: API Jolpica (compatible con Ergast)
 
 - **URL:** `https://api.jolpi.ca/ergast/f1`
-- **Coverage:** 1950–present (race results), 2003–present (qualifying)
-- **Used for:** Race results, qualifying results, schedules
-- **Advantages:** Free, no authentication, REST JSON, stable
+- **Cobertura:** 1950–presente (resultados de carrera), 2003–presente (clasificación)
+- **Uso:** Resultados de carrera, tiempos de clasificación, calendarios
+- **Ventajas:** Gratuita, sin autenticación, REST JSON, estable
 
-### Optional: FastF1
+### Opcional: FastF1
 
-- **Package:** `fastf1`
-- **Used for:** Detailed session timing if more granular qualifying data is needed
-- **Not required** for the core pipeline
-
----
-
-## Feature Engineering
-
-### Race History Features (from Jolpica race results)
-
-| Feature | Description |
-|---|---|
-| `driver_career_wins_before` | Career wins before this race |
-| `driver_season_points_before` | Championship points in current season |
-| `driver_season_position_before` | Championship standing before this race |
-| `driver_avg_finish_last_3/5/10` | Rolling average finish position |
-| `driver_win_rate_last_3/5/10` | Rolling win rate |
-| `driver_circuit_avg_finish_before` | Average finish at this specific circuit |
-| `constructor_season_position_before` | Constructor championship standing |
-| `constructor_avg_finish_last_3/5` | Team's recent form |
-
-### Qualifying Features (NEW — from Jolpica qualifying results)
-
-| Feature | Description |
-|---|---|
-| `qualifying_position` | Final qualifying classification (1 = pole) |
-| `gap_to_pole_sec` | Time gap to pole-sitter in seconds |
-| `driver_vs_teammate_q_gap_sec` | Gap to best-qualifying teammate |
-| `team_best_qualifying_pos` | Best qualifying position for the team |
-| `qualifying_session_numeric` | Q1=1, Q2=2, Q3=3 reached |
-| `driver_avg_qualifying_last_3/5` | Historical qualifying form |
+- **Paquete:** `fastf1`
+- **Uso:** Datos de timing más granulares si se desea ampliar las features
+- **No requerido** para el pipeline principal
 
 ---
 
-## Modeling Approach
+## Ingeniería de Features
 
-### Problem Formulation
+### Features de historial de carrera (fuente: resultados Jolpica)
 
-Binary classification per driver per race: `winner = 0/1`  
-Win probabilities are softmax-normalized across all drivers per race so they sum to ~100%.
-
-### Models Evaluated
-
-| Model | Rationale |
+| Feature | Descripción |
 |---|---|
-| Logistic Regression | Excellent calibration, interpretable, baseline |
-| Random Forest | Non-linearities, robust to small datasets |
-| Gradient Boosting | Balance of complexity and performance |
-| **XGBoost** | State-of-the-art tabular, built-in regularization |
-| LightGBM | Fast, good with moderate-size data |
-| CatBoost | Often well-calibrated, handles imbalance |
+| `driver_career_wins_before` | Victorias de carrera acumuladas antes de esta fecha |
+| `driver_season_points_before` | Puntos del campeonato en la temporada actual |
+| `driver_season_position_before` | Posición en el campeonato antes de esta carrera |
+| `driver_avg_finish_last_3/5/10` | Promedio de posición de llegada en las últimas 3/5/10 carreras |
+| `driver_win_rate_last_3/5/10` | Tasa de victorias en las últimas 3/5/10 carreras |
+| `driver_circuit_avg_finish_before` | Promedio histórico en este circuito específico |
+| `constructor_season_position_before` | Posición del constructor en el campeonato |
+| `constructor_avg_finish_last_3/5` | Forma reciente del equipo |
 
-Final model selected based on **walk-forward Log Loss** — not by assumption.
+### Features de clasificación (NUEVO — fuente: endpoint de qualifying Jolpica)
 
-### Temporal Validation
+| Feature | Descripción |
+|---|---|
+| `qualifying_position` | Posición final en clasificación (1 = pole) |
+| `gap_to_pole_sec` | Diferencia con el tiempo de pole en segundos |
+| `driver_vs_teammate_q_gap_sec` | Diferencia con el compañero de equipo en clasificación |
+| `team_best_qualifying_pos` | Mejor posición de clasificación del equipo |
+| `qualifying_session_numeric` | Sesión alcanzada: Q1=1, Q2=2, Q3=3 |
+| `driver_avg_qualifying_last_3/5` | Forma histórica en clasificación |
+
+---
+
+## Enfoque de modelado
+
+### Formulación del problema
+
+Clasificación binaria por piloto por carrera: `ganó = 0/1`  
+Las probabilidades se normalizan con softmax por carrera para que sumen ~100%.
+
+### Modelos evaluados
+
+| Modelo | Justificación |
+|---|---|
+| Regresión Logística | Excelente calibración, interpretable, baseline |
+| Random Forest | Captura no linealidades, robusto con datasets pequeños |
+| **Gradient Boosting** ⭐ | Mejor balance complejidad-rendimiento |
+| XGBoost | State-of-the-art tabular, regularización integrada |
+| LightGBM | Rápido, buen desempeño con datos de tamaño moderado |
+| CatBoost | Bien calibrado out-of-the-box, maneja desbalance |
+
+El modelo final se selecciona por **Log Loss en validación walk-forward**, no por suposición.
+
+### Validación temporal walk-forward
 
 ```
-Train → 2018-2020   Validate → 2021
-Train → 2018-2021   Validate → 2022
-Train → 2018-2022   Validate → 2023
-Train → 2018-2023   Validate → 2024
-Train → 2018-2024   Validate → 2025
+Entrenamiento: 2018-2020   Validación: 2021
+Entrenamiento: 2018-2021   Validación: 2022
+Entrenamiento: 2018-2022   Validación: 2023
+Entrenamiento: 2018-2023   Validación: 2024
+Entrenamiento: 2018-2024   Validación: 2025
 ```
 
-No random train/test split. No data from the future is used to train.
+Sin división aleatoria train/test. Sin datos del futuro en el entrenamiento.
 
 ---
 
-## Data Leakage Prevention
+## Prevención de fuga de datos
 
-> **This is the most critical methodological aspect of the project.**
+> **Este es el aspecto metodológico más crítico del proyecto.**
 
-The following fields are **never** used as model features:
-- `finish_position` (race result)
-- `points` from the current race
-- `laps`, `status` from the current race
-- `won` (the target itself)
+Los siguientes campos **nunca** se usan como features del modelo:
+- `finish_position` (resultado de la carrera)
+- `points` de la carrera actual
+- `laps`, `status` de la carrera actual
+- `won` (la variable objetivo)
 
-All historical features use `shift(1)` to ensure only past races are used.  
-Qualifying features for the target race use the Saturday qualifying session — pre-race information, safe to include.
+Todas las features históricas usan `shift(1)` para garantizar que solo se use información de carreras pasadas.  
+Las features de clasificación del GP objetivo provienen de la sesión del sábado — información pre-carrera, válida.
 
-A formal leakage audit is run automatically before any prediction is generated.
-
----
-
-## Results
-
-> See `reports/` and `data/processed/` after running the pipeline.
-
-### Final Prediction — Spanish Grand Prix 2026
-
-| # | Driver | Team | Win % |
-|---|---|---|---|
-| 1 | Norris | McLaren | ~% |
-| 2 | Antonelli | Mercedes | ~% |
-| 3 | Verstappen | Red Bull | ~% |
-| ... | ... | ... | ... |
-
-*Results populated after running `python pipeline.py`*
+**Una auditoría formal de leakage corre automáticamente** antes de generar cualquier predicción.
 
 ---
 
-## Evaluation Metrics
+## Resultados
 
-| Metric | Why it matters |
+### Comparación de modelos — Walk-Forward (2021–2025, historia completa)
+
+| Modelo | Log Loss | Brier Score | ROC-AUC | Winner Accuracy |
+|---|---|---|---|---|
+| **Gradient Boosting** | **0.1072** | **0.0309** | **0.950** | **60.8%** |
+| XGBoost | 0.1276 | 0.0388 | 0.941 | 53.6% |
+| Random Forest | 0.1342 | 0.0363 | 0.951 | 52.1% |
+| LightGBM | 0.1412 | 0.0413 | 0.930 | 50.2% |
+| CatBoost | 0.1473 | 0.0446 | 0.940 | 53.4% |
+| Regresión Logística | 0.2608 | 0.0797 | 0.942 | 54.8% |
+
+> **Baselines naïve:** El piloto de pole siempre gana = 55.4% · Tasa de victorias histórica = 34.4%  
+> Gradient Boosting (60.8%) **supera el baseline de pole** — el modelo agrega valor real.
+
+### Comparación de ventanas históricas (Gradient Boosting)
+
+| Ventana | Log Loss | Winner Accuracy |
+|---|---|---|
+| **5yr (2021–)** | **0.1129** | **63.5%** |
+| 7yr (2019–) | 0.1067 | 56.5% |
+| todo (2018–) | 0.1072 | 60.8% |
+| 3yr (2023–) | 0.1474 | 54.2% |
+
+> **Mejor ventana: 5yr** — captura la era competitiva actual sin ruido de temporadas antiguas.
+
+### Importancia de features SHAP (Top 10)
+
+| Ranking | Feature | Importancia |
+|---|---|---|
+| 1 | `qualifying_position` | 0.307 |
+| 2 | `constructor_avg_finish_last_3` | 0.201 |
+| 3 | `driver_win_rate_last_10` | 0.162 |
+| 4 | `gap_to_pole_sec` | 0.150 |
+| 5 | `driver_avg_finish_last_3` | 0.145 |
+
+> La posición de clasificación y la diferencia con la pole son las **2 features más importantes por SHAP** — validando la contribución metodológica central del proyecto.
+
+### Predicción final — Gran Premio de España 2026
+
+> **Modelo:** Gradient Boosting · **Ventana:** 5yr (2021–2026 Rnd 13) · **Clasificación:** sábado 12/09/2026
+
+| # | Piloto | Equipo | Clasificación | Prob. victoria |
+|---|---|---|---|---|
+| 1 | **Norris** | McLaren | P1 | **45.8%** |
+| 2 | **Antonelli** | Mercedes | P2 | **41.9%** |
+| 3 | Verstappen | Red Bull | P3 | 4.6% |
+| 4 | Russell | Mercedes | P6 | 1.3% |
+| 5 | Hamilton | Ferrari | P4 | 1.1% |
+| 6 | Leclerc | Ferrari | P5 | 0.8% |
+| 7 | Piastri | McLaren | P7 | 0.4% |
+| ... | ... | ... | ... | ... |
+
+> **Ganador predicho: Lando Norris (McLaren)** — pole position, mejor forma reciente del piloto y del equipo.  
+> McLaren + Mercedes combinados: **>87%** de probabilidad. El Madring es un circuito nuevo sin historia — todos los pilotos tienen features de circuito en cero.
+
+---
+
+## Métricas de evaluación
+
+| Métrica | Por qué importa |
 |---|---|
-| **Log Loss** | Primary — penalizes overconfident wrong predictions |
-| **Brier Score** | Calibration — squared probability error |
-| **ROC-AUC** | Discrimination ability |
-| **Winner Accuracy** | Did we predict the correct winner per race? |
-| **Calibration Curve** | Does P=0.3 really mean 30% observed win rate? |
+| **Log Loss** | Principal — penaliza predicciones con alta confianza que resultan incorrectas |
+| **Brier Score** | Calibración — error cuadrático en las probabilidades |
+| **ROC-AUC** | Capacidad discriminativa del modelo |
+| **Winner Accuracy** | ¿Predijimos correctamente al ganador en cada carrera? |
+| **Curva de calibración** | ¿Cuando el modelo dice 30%, ocurre en el 30% de los casos? |
 
 ---
 
-## Limitations
+## Limitaciones
 
-- **Madring is a new circuit** — no historical circuit-specific data available for Madrid
-- **Small dataset** — ~200 races × ~20 drivers = ~4,000 rows; model complexity is constrained accordingly
-- **F1 has high inherent randomness** — safety cars, mechanical failures, weather, and strategy decisions are not predictable from pre-race features alone
-- **Grid penalties not modeled** — qualifying position may differ from starting grid if penalties are applied
-- **Driver market changes** — 2026 is a new regulation era; some driver-team combinations have no history
-
----
-
-## Future Improvements
-
-- Incorporate sprint race results as additional signal
-- Add weather forecast data (if demonstrated to improve validation metrics)
-- Model grid penalties explicitly (qualify vs. actual starting position)
-- Add pit stop strategy data (FastF1)
-- Use Platt scaling or isotonic regression for better probability calibration
-- Extend to predict podium probability (top 3) in addition to winner
+- **Madring es un circuito nuevo** — sin datos históricos en F1 para ningún piloto; todos arrancan desde cero en circuit-features
+- **Dataset pequeño** — ~200 carreras × ~20 pilotos = ~4.000 filas; la complejidad del modelo está limitada en consecuencia
+- **Alta aleatoriedad intrínseca en F1** — autos de seguridad, fallas mecánicas, clima y estrategias de pit no son predecibles desde features pre-carrera
+- **Penalizaciones de grilla no modeladas** — la posición de clasificación puede diferir de la posición real de salida si hay penalizaciones
+- **Cambio de reglamento 2026** — las dinámicas de equipo y piloto en esta era son distintas; el modelo aprende patrones que pueden transferirse de forma imperfecta
 
 ---
 
-## Stack
+## Mejoras futuras
 
-Python 3.11+ · pandas · NumPy · scikit-learn · XGBoost · LightGBM · CatBoost · SHAP · matplotlib · seaborn · FastF1 · PyYAML · Jupyter
+- Incorporar resultados de sprint races como señal adicional
+- Agregar datos de pronóstico del tiempo (si demuestran mejorar las métricas)
+- Modelar penalizaciones de grilla explícitamente
+- Incorporar datos de pit stops (FastF1)
+- Calibración isotónica o de Platt para mejorar la calibración de probabilidades
+- Extender para predecir probabilidad de podio (top 3)
 
 ---
 
-## Reproducibility
+## Stack tecnológico
 
-All random seeds are set via `random_seed: 42` in `config/race_config.yaml`.  
-Raw data is fully reproducible by re-running the download step.  
-No absolute paths — all paths are relative to the project root.
+Python 3.12 · pandas · NumPy · scikit-learn · XGBoost · LightGBM · CatBoost · SHAP · matplotlib · FastF1 · PyYAML · Jupyter
 
-To adapt this pipeline for a different Grand Prix, edit `config/race_config.yaml`:
+---
+
+## Reproducibilidad
+
+Todas las semillas aleatorias se fijan con `random_seed: 42` en `config/race_config.yaml`.  
+Los datos raw son completamente reproducibles re-ejecutando el paso de descarga.  
+No hay rutas absolutas — todas las rutas son relativas a la raíz del proyecto.
+
+### Adaptar para otro Gran Premio
+
+Editar solo `config/race_config.yaml`:
 
 ```yaml
 target:
-  gp_name: "Singapore Grand Prix"
+  gp_name: "Gran Premio de Singapur"
   year: 2026
   round: 17
   circuit_id: "marina_bay"
@@ -305,10 +364,24 @@ target:
   qualifying_date: "2026-10-10"
 ```
 
+Luego ejecutar:
+```bash
+python pipeline.py --skip-download  # si los datos ya están descargados
+```
+
 ---
 
-## Author
+## Autor
 
-Developed as part of a personal Data Engineering / Machine Learning portfolio.  
-Demonstrates: ETL, Feature Engineering, Temporal Validation, Model Evaluation, Interpretability, and Reproducibility.
+Desarrollado como parte de un portfolio personal de Data Engineering / Machine Learning.  
+Demuestra: ETL, Ingeniería de Features, Validación Temporal, Evaluación de Modelos, Interpretabilidad y Reproducibilidad.
 
+---
+
+## Licencia
+
+Uso personal / portfolio. Los datos provienen de la API pública Jolpica (compatible con Ergast).
+
+---
+
+> 📄 **English version:** [README_EN.md](README_EN.md)

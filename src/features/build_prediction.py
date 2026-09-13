@@ -1,11 +1,11 @@
-"""Build the prediction input dataset for the target Grand Prix.
+"""Construye el dataset de entrada para la predicción del Gran Premio objetivo.
 
-This module appends a synthetic target-race row for each driver
-(with no race result yet) to the historical data, then runs the
-full feature pipeline to compute pre-race features.
+Este módulo añade una fila sintética de la carrera objetivo para cada piloto
+(aún sin resultado de carrera) a los datos históricos, y luego ejecuta el
+pipeline completo de características para calcular las variables pre-carrera.
 
-The qualifying features for the target race come directly from the
-qualifying results downloaded on Saturday (already available in the API).
+Las características de clasificación para la carrera objetivo provienen directamente de los
+resultados de clasificación descargados el sábado (ya disponibles en la API).
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from src.features.build_features_combined import build_combined_features, ALL_CO
 
 
 def _target_qualifying_data() -> pd.DataFrame:
-    """Load the real qualifying results for the target GP from the API cache."""
+    """Carga los resultados reales de clasificación para el GP objetivo desde la caché de la API."""
     year = TARGET["year"]
     round_ = TARGET["round"]
     q_file = RAW_DIR / str(year) / "qualifying" / f"round_{round_:02d}_qualifying.json"
@@ -42,7 +42,7 @@ def _target_qualifying_data() -> pd.DataFrame:
 
 
 def _candidate_drivers_from_qualifying(race_data: dict) -> pd.DataFrame:
-    """Extract the 20-driver grid directly from the target qualifying results."""
+    """Extrae la parrilla de 20 pilotos directamente de los resultados de clasificación objetivo."""
     from src.data.load_qualifying import _normalize_qualifying
     records = [
         _normalize_qualifying(race_data, r)
@@ -53,23 +53,23 @@ def _candidate_drivers_from_qualifying(race_data: dict) -> pd.DataFrame:
 
 
 def build_target_features(results: pd.DataFrame, qualifying: pd.DataFrame) -> pd.DataFrame:
-    """Build prediction features for every driver in the target GP lineup.
+    """Construye las características de predicción para cada piloto en la alineación del GP objetivo.
 
-    Steps
+    Pasos
     -----
-    1. Load the real qualifying results for the target GP.
-    2. Create synthetic zero-result rows for the target race.
-    3. Concatenate with historical results and run the full feature pipeline.
-    4. Extract only the target-race rows.
+    1. Cargar los resultados reales de clasificación para el GP objetivo.
+    2. Crear filas sintéticas sin resultado para la carrera objetivo.
+    3. Concatenar con los resultados históricos y ejecutar el pipeline completo de características.
+    4. Extraer únicamente las filas de la carrera objetivo.
 
-    The qualifying features for the target race are already included in
-    `qualifying` (loaded from the downloaded qualifying file).
+    Las características de clasificación para la carrera objetivo ya están incluidas en
+    `qualifying` (cargadas desde el archivo de clasificación descargado).
 
-    Returns
+    Retorna
     -------
     pd.DataFrame
-        One row per driver, with MODEL_FEATURE_COLUMNS populated and
-        `won` set to NaN (unknown — we are predicting this).
+        Una fila por piloto, con MODEL_FEATURE_COLUMNS pobladas y
+        `won` establecido en NaN (desconocido — esto es lo que estamos prediciendo).
     """
     race_data = _target_qualifying_data()
     candidates = _candidate_drivers_from_qualifying(race_data)
@@ -90,7 +90,7 @@ def build_target_features(results: pd.DataFrame, qualifying: pd.DataFrame) -> pd
         won=pd.NA,
     )
 
-    # Align columns with results schema
+    # Alinear columnas con el esquema de results
     for col in RESULT_COLUMNS:
         if col not in target_rows.columns:
             target_rows[col] = pd.NA
@@ -107,7 +107,7 @@ def build_target_features(results: pd.DataFrame, qualifying: pd.DataFrame) -> pd
 
 
 def save_target_features(df: pd.DataFrame) -> Path:
-    """Persist the target prediction input."""
+    """Persiste los datos de entrada para la predicción del evento objetivo."""
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     gp_slug = TARGET["circuit_id"]
     out = PROCESSED_DIR / f"{gp_slug}_{TARGET['year']}_prediction_input.csv"

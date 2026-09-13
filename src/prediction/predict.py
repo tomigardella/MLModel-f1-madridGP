@@ -1,14 +1,14 @@
-"""Final prediction runner for the target Grand Prix.
+"""Ejecutor de predicción final para el Gran Premio objetivo.
 
-This module:
-  1. Runs the leakage audit (mandatory gate)
-  2. Trains the best model on the optimal historical window
-  3. Generates win probabilities for each driver in the target GP
-  4. Prints and saves the final prediction table
-  5. Generates an explanation of top driver predictions
+Este módulo:
+  1. Ejecuta la auditoría de fuga de datos (filtro obligatorio)
+  2. Entrena el mejor modelo en la ventana histórica óptima
+  3. Genera probabilidades de victoria para cada piloto en el GP objetivo
+  4. Imprime y guarda la tabla de predicción final
+  5. Genera una explicación de las predicciones de los mejores pilotos
 
-Usage
------
+Uso
+---
     python -m src.prediction.predict
 """
 
@@ -54,10 +54,10 @@ def train_final_model(
     best_window_start: int,
     best_model_name: str,
 ) -> object:
-    """Train the selected model on the full optimal window (up to Round 13 of 2026)."""
+    """Entrena el modelo seleccionado en la ventana óptima completa (hasta la Ronda 13 de 2026)."""
     from src.modeling.model_registry import get_model_builders
 
-    # Use all data up to (but not including) the target race
+    # Usar todos los datos hasta (pero sin incluir) la carrera objetivo
     target_year = TARGET["year"]
     target_round = TARGET["round"]
 
@@ -85,7 +85,7 @@ def train_final_model(
     model = models[best_model_name]
     model.fit(train[MODEL_FEATURE_COLUMNS], train["won"].astype(int))
 
-    # Persist the fitted model
+    # Persistir el modelo entrenado
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
     model_path = MODEL_DIR / f"final_{best_model_name}_{TARGET['circuit_id']}_{TARGET['year']}.pkl"
     with model_path.open("wb") as f:
@@ -96,7 +96,7 @@ def train_final_model(
 
 
 def generate_prediction(model, target: pd.DataFrame) -> pd.DataFrame:
-    """Produce the final win-probability ranking for the target GP."""
+    """Genera el ranking final de probabilidad de victoria para el GP objetivo."""
     predictions = predict_race_probabilities(model, target, MODEL_FEATURE_COLUMNS)
     predictions["win_probability_pct"] = (predictions["win_probability"] * 100).round(1)
     predictions["rank"] = range(1, len(predictions) + 1)
@@ -104,7 +104,7 @@ def generate_prediction(model, target: pd.DataFrame) -> pd.DataFrame:
 
 
 def print_prediction(predictions: pd.DataFrame) -> None:
-    """Pretty-print the final prediction table."""
+    """Imprime de forma legible la tabla final de predicciones."""
     print("\n" + "=" * 60)
     print(f"  {TARGET['gp_name'].upper()} {TARGET['year']}")
     print(f"  Pre-race prediction  |  {TARGET['race_date']}")
@@ -125,7 +125,7 @@ def print_prediction(predictions: pd.DataFrame) -> None:
 
 
 def plot_prediction(predictions: pd.DataFrame) -> None:
-    """Horizontal bar chart of win probabilities."""
+    """Gráfico de barras horizontales de probabilidades de victoria."""
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=(9, 7))
 
@@ -155,7 +155,7 @@ def plot_prediction(predictions: pd.DataFrame) -> None:
 
 
 def save_prediction(predictions: pd.DataFrame) -> Path:
-    """Save the final prediction to CSV."""
+    """Guarda la predicción final en un archivo CSV."""
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     cols = [
         "rank", "driver_id", "driver_code", "constructor_id",
@@ -169,26 +169,26 @@ def save_prediction(predictions: pd.DataFrame) -> Path:
 
 
 def main(
-    best_window_start: int = 2021,   # override from window_comparison results
-    best_model_name: str = "xgboost",  # override from walk_forward results
+    best_window_start: int = 2021,   # sobrescribir a partir de los resultados de window_comparison
+    best_model_name: str = "xgboost",  # sobrescribir a partir de los resultados de walk_forward
 ) -> pd.DataFrame:
-    """Run the full prediction pipeline."""
-    # Step 1: Leakage audit (mandatory gate)
+    """Ejecuta el pipeline de predicción completo."""
+    # Paso 1: Auditoría de fuga (filtro obligatorio)
     print("\nStep 1: Running leakage audit…")
     features = load_features()
     audit = run_leakage_audit(features)
-    print_audit(audit)  # raises if critical leakage detected
+    print_audit(audit)  # lanza excepción si se detecta fuga crítica
 
-    # Step 2: Train final model
+    # Paso 2: Entrenar el modelo final
     print("\nStep 2: Training final model…")
     model = train_final_model(features, best_window_start, best_model_name)
 
-    # Step 3: Generate predictions
+    # Paso 3: Generar predicciones
     print("\nStep 3: Generating predictions…")
     target = load_target_features()
     predictions = generate_prediction(model, target)
 
-    # Step 4: Output
+    # Paso 4: Salida
     print_prediction(predictions)
     plot_prediction(predictions)
     out = save_prediction(predictions)
@@ -198,9 +198,9 @@ def main(
 
 
 if __name__ == "__main__":
-    # These values should be updated after running window_comparison + walk_forward
+    # Estos valores deben actualizarse después de ejecutar window_comparison + walk_forward
     predictions = main(
-        best_window_start=2021,   # update after comparing windows
-        best_model_name="xgboost",  # update after walk-forward comparison
+        best_window_start=2021,   # actualizar después de comparar ventanas
+        best_model_name="xgboost",  # actualizar después de la comparación walk-forward
     )
 

@@ -1,33 +1,33 @@
-"""End-to-end orchestration pipeline for the F1 GP winner prediction project.
+"""Pipeline de orquestación de extremo a extremo para el proyecto de predicción de ganador de GP de F1.
 
-This script runs the full pipeline from data download to final prediction.
-All parameters are read from config/race_config.yaml.
+Este script ejecuta el pipeline completo desde la descarga de datos hasta la predicción final.
+Todos los parámetros se leen desde config/race_config.yaml.
 
-Steps
+Pasos
 -----
-1.  Download historical race results (Jolpica API)
-2.  Download historical qualifying results (Jolpica API)
-3.  Download target-race qualifying (already available for Madrid 2026)
-4.  Load and normalize race results
-5.  Load and normalize qualifying results
-6.  Build combined features (race + qualifying)
-7.  Build target prediction input
-8.  Run naïve baselines
-9.  Run walk-forward validation
-10. Run historical window comparison
-11. Run leakage audit
-12. Train final model and generate prediction
-13. Run SHAP analysis
+1.  Descargar resultados históricos de carreras (API de Jolpica)
+2.  Descargar resultados históricos de clasificación (API de Jolpica)
+3.  Descargar clasificación de la carrera objetivo (ya disponible para Madrid 2026)
+4.  Cargar y normalizar resultados de carreras
+5.  Cargar y normalizar resultados de clasificación
+6.  Construir características combinadas (carrera + clasificación)
+7.  Construir datos de entrada para la predicción objetivo
+8.  Ejecutar líneas base ingenuas (naïve baselines)
+9.  Ejecutar validación walk-forward
+10. Ejecutar comparación de ventanas históricas
+11. Ejecutar auditoría de fuga de datos
+12. Entrenar modelo final y generar predicción
+13. Ejecutar análisis SHAP
 
-Usage
------
-    # Full pipeline
+Uso
+---
+    # Pipeline completo
     python pipeline.py
 
-    # Skip download (if data already cached)
+    # Omitir descarga (si los datos ya están en caché)
     python pipeline.py --skip-download
 
-    # Quick run (only prediction, using cached features)
+    # Ejecución rápida (solo predicción, usando características en caché)
     python pipeline.py --predict-only --model xgboost --window 2021
 """
 
@@ -58,14 +58,14 @@ def run_pipeline(
     best_model: str | None = None,
     best_window: int | None = None,
 ) -> dict:
-    """Execute the full ML pipeline.
+    """Ejecuta el pipeline de ML completo.
 
-    Parameters
+    Parámetros
     ----------
-    skip_download:  If True, skip API downloads (use cached raw data).
-    predict_only:   If True, skip validation and go straight to prediction.
-    best_model:     Model name override (default: determined by walk-forward).
-    best_window:    Window start year override (default: determined by comparison).
+    skip_download:  Si es True, omite las descargas de la API (usa datos sin procesar en caché).
+    predict_only:   Si es True, omite los pasos de validación y pasa directo a la predicción.
+    best_model:     Sobrescribe el nombre del modelo (por defecto: determinado por walk-forward).
+    best_window:    Sobrescribe el año de inicio de la ventana (por defecto: determinado por la comparación).
     """
     t0 = time.time()
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
@@ -74,7 +74,7 @@ def run_pipeline(
     outputs: dict = {}
 
     # -----------------------------------------------------------------------
-    # PHASE 1: DATA DOWNLOAD
+    # FASE 1: DESCARGA DE DATOS
     # -----------------------------------------------------------------------
     if not skip_download:
         step(1, "Downloading race results (Jolpica API)")
@@ -99,7 +99,7 @@ def run_pipeline(
         print("\n[skip-download] Using cached raw data.")
 
     # -----------------------------------------------------------------------
-    # PHASE 2: LOAD & FEATURE ENGINEERING
+    # FASE 2: CARGA E INGENIERÍA DE CARACTERÍSTICAS
     # -----------------------------------------------------------------------
     step(4, "Loading and normalizing race results")
     from src.data.load_results import load_results
@@ -133,7 +133,7 @@ def run_pipeline(
         final_window = best_window or 2021
     else:
         # -------------------------------------------------------------------
-        # PHASE 3: BASELINES
+        # FASE 3: LÍNEAS BASE
         # -------------------------------------------------------------------
         step(8, "Naïve baselines")
         from src.modeling.baseline import evaluate_qualifying_baseline, evaluate_win_rate_baseline
@@ -144,7 +144,7 @@ def run_pipeline(
         outputs["baselines"] = {"qualifying": q_base, "win_rate": wr_base}
 
         # -------------------------------------------------------------------
-        # PHASE 4: WALK-FORWARD VALIDATION
+        # FASE 4: VALIDACIÓN WALK-FORWARD
         # -------------------------------------------------------------------
         step(9, "Walk-forward temporal validation (all models)")
         from src.modeling.walk_forward import run_walk_forward, summarize_walk_forward, save_walk_forward
@@ -156,7 +156,7 @@ def run_pipeline(
         outputs["walk_forward"] = str(wf_path)
 
         # -------------------------------------------------------------------
-        # PHASE 5: WINDOW COMPARISON
+        # FASE 5: COMPARACIÓN DE VENTANAS
         # -------------------------------------------------------------------
         step(10, "Historical window comparison (3yr / 5yr / 7yr / all)")
         from src.modeling.window_comparison import (
@@ -170,7 +170,7 @@ def run_pipeline(
         print(wc_summary.to_string(index=False))
         outputs["window_comparison"] = str(wc_path)
 
-        # Select best combination
+        # Seleccionar la mejor combinación
         best_combo = (
             wc_summary.sort_values("log_loss").iloc[0]
         )
@@ -183,19 +183,19 @@ def run_pipeline(
         print(f"  → Selected window: starts {final_window}")
 
     # -----------------------------------------------------------------------
-    # PHASE 6: LEAKAGE AUDIT
+    # FASE 6: AUDITORÍA DE FUGA DE DATOS
     # -----------------------------------------------------------------------
     step(11, "Data leakage audit (mandatory gate)")
     from src.evaluation.leakage_audit import run_leakage_audit, print_audit
     audit = run_leakage_audit(features)
-    print_audit(audit)  # raises RuntimeError if critical leakage found
+    print_audit(audit)  # lanza RuntimeError si se detecta fuga crítica
     audit_path = PROCESSED_DIR.parent / "reports" / "leakage_audit.csv"
     audit_path.parent.mkdir(exist_ok=True)
     audit.to_csv(audit_path, index=False)
     outputs["leakage_audit"] = str(audit_path)
 
     # -----------------------------------------------------------------------
-    # PHASE 7: FINAL PREDICTION
+    # FASE 7: PREDICCIÓN FINAL
     # -----------------------------------------------------------------------
     step(12, f"Final prediction — {TARGET['gp_name']} {TARGET['year']}")
     from src.prediction.predict import (
@@ -211,7 +211,7 @@ def run_pipeline(
     outputs["predictions"] = str(pred_path)
 
     # -----------------------------------------------------------------------
-    # PHASE 8: SHAP ANALYSIS
+    # FASE 8: ANÁLISIS SHAP
     # -----------------------------------------------------------------------
     step(13, "SHAP interpretability analysis")
     try:

@@ -1,4 +1,4 @@
-"""Central configuration loader for the F1 GP prediction pipeline."""
+"""Cargador central de configuración para el pipeline de predicción del GP de F1."""
 
 from pathlib import Path
 
@@ -9,22 +9,22 @@ _CONFIG_PATH = PROJECT_ROOT / "config" / "race_config.yaml"
 
 
 def load_config() -> dict:
-    """Load and return the race configuration from YAML."""
+    """Carga y devuelve la configuración de la carrera desde el archivo YAML."""
     with _CONFIG_PATH.open(encoding="utf-8") as fh:
         return yaml.safe_load(fh)
 
 
-# Singleton loaded once at import time
+# Singleton cargado una sola vez al importar
 CONFIG = load_config()
 
-# Convenience accessors
+# Accesores de conveniencia
 TARGET = CONFIG["target"]
 HISTORY = CONFIG["history"]
 VALIDATION = CONFIG["validation"]
 WINDOWS = CONFIG["windows"]
 RANDOM_SEED = CONFIG["random_seed"]
 
-# Directory shortcuts
+# Accesos directos a directorios
 RAW_DIR = PROJECT_ROOT / "data" / "raw"
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 EXTERNAL_DIR = PROJECT_ROOT / "data" / "external"

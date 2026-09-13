@@ -1,10 +1,10 @@
-"""Evaluation metrics for race winner prediction models.
+"""Métricas de evaluación para modelos de predicción de ganador de carrera.
 
-The key evaluation approach:
-  - Metrics are computed at the ROW level (one row = one driver in one race).
-  - Winner accuracy is computed at the RACE level: did the model correctly
-    identify the driver with the highest predicted probability as the winner?
-  - Both perspectives are reported.
+El enfoque principal de evaluación:
+  - Las métricas se calculan a nivel de FILA (una fila = un piloto en una carrera).
+  - La precisión del ganador se calcula a nivel de CARRERA: ¿el modelo identificó
+    correctamente al piloto con la mayor probabilidad predicha como ganador?
+  - Se reportan ambas perspectivas.
 """
 
 from __future__ import annotations
@@ -20,24 +20,24 @@ def evaluate(
     feature_columns: list[str],
     target_col: str = "won",
 ) -> dict[str, float]:
-    """Compute all evaluation metrics for a fitted model on a dataset.
+    """Calcula todas las métricas de evaluación para un modelo entrenado en un dataset.
 
-    Parameters
+    Parámetros
     ----------
     model:
-        A fitted sklearn Pipeline with a predict_proba method.
+        Un Pipeline de sklearn entrenado con un método predict_proba.
     dataset:
-        DataFrame with feature columns and target column.
+        DataFrame con columnas de características y columna objetivo.
     feature_columns:
-        List of feature column names to pass to the model.
+        Lista de nombres de columnas de características para pasar al modelo.
     target_col:
-        Name of the binary target column (default: "won").
+        Nombre de la columna objetivo binaria (por defecto: "won").
 
-    Returns
+    Retorna
     -------
-    dict with keys: log_loss, brier_score, roc_auc, winner_accuracy, n_races
+    dict con claves: log_loss, brier_score, roc_auc, winner_accuracy, n_races
     """
-    # Drop rows where target is NaN (target race row)
+    # Descartar filas donde el target es NaN (fila de la carrera objetivo)
     valid = dataset.dropna(subset=[target_col])
     if len(valid) == 0:
         return {}
@@ -45,7 +45,7 @@ def evaluate(
     probas = model.predict_proba(valid[feature_columns])[:, 1]
     labels = valid[target_col].astype(int)
 
-    # Row-level metrics
+    # Métricas a nivel de fila
     ll = log_loss(labels, probas, labels=[0, 1])
     bs = brier_score_loss(labels, probas)
 
@@ -54,7 +54,7 @@ def evaluate(
     except ValueError:
         auc = float("nan")
 
-    # Race-level winner accuracy
+    # Precisión del ganador a nivel de carrera
     tmp = valid.assign(_proba=probas)
     grouped = tmp.groupby(["season", "round"], sort=False)
     predicted_winner_idx = grouped["_proba"].idxmax()
@@ -77,23 +77,23 @@ def predict_race_probabilities(
     race_df: pd.DataFrame,
     feature_columns: list[str],
 ) -> pd.DataFrame:
-    """Generate normalized win probabilities for all drivers in a race.
+    """Genera probabilidades de victoria normalizadas para todos los pilotos en una carrera.
 
-    The raw probabilities from predict_proba are softmax-normalized across
-    all drivers in the race so they sum to 1.0.
+    Las probabilidades brutas de predict_proba se normalizan para
+    todos los pilotos de la carrera de modo que sumen 1.0.
 
-    Parameters
+    Parámetros
     ----------
     model:
-        A fitted sklearn Pipeline.
+        Un Pipeline de sklearn entrenado.
     race_df:
-        DataFrame with one row per driver (single race only).
+        DataFrame con una fila por piloto (solo para una carrera individual).
     feature_columns:
-        Model feature columns.
+        Columnas de características del modelo.
 
-    Returns
+    Retorna
     -------
-    pd.DataFrame with added columns: raw_win_probability, win_probability
+    pd.DataFrame con columnas agregadas: raw_win_probability, win_probability
     """
     result = race_df.copy()
     raw_probas = model.predict_proba(result[feature_columns])[:, 1]

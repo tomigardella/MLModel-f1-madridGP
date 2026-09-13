@@ -1,4 +1,4 @@
-"""Basic smoke tests for data loading and feature engineering."""
+"""Pruebas básicas (smoke tests) para la carga de datos e ingeniería de características."""
 
 import pandas as pd
 import pytest
@@ -10,7 +10,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 
 class TestLoadQualifying:
-    """Tests for the qualifying data loader."""
+    """Pruebas para el cargador de datos de clasificación."""
 
     def test_parse_lap_time_valid(self):
         from src.data.load_qualifying import _parse_lap_time
@@ -43,10 +43,10 @@ class TestLoadQualifying:
 
 
 class TestQualifyingFeatures:
-    """Tests for qualifying feature engineering."""
+    """Pruebas para la ingeniería de características de clasificación."""
 
     def _make_qualifying_df(self) -> pd.DataFrame:
-        """Minimal multi-race qualifying DataFrame for testing."""
+        """DataFrame de clasificación mínimo multicarrera para pruebas."""
         return pd.DataFrame([
             {"season": 2025, "round": 1, "race_date": "2025-03-16",
              "race_name": "R1", "circuit_id": "c1",
@@ -74,12 +74,12 @@ class TestQualifyingFeatures:
         from src.features.build_qualifying_features import build_qualifying_features
         q = self._make_qualifying_df()
         feats = build_qualifying_features(q)
-        # Pole-sitter should have gap_to_pole_sec == 0
+        # Quien obtiene la pole debería tener gap_to_pole_sec == 0
         pole_rows = feats[feats["qualifying_position"] == 1]
         assert (pole_rows["gap_to_pole_sec"].abs() < 1e-9).all()
 
     def test_historical_qualifying_feature_no_leakage(self):
-        """driver_avg_qualifying_last_3 for round 1 must be NaN (no prior history)."""
+        """driver_avg_qualifying_last_3 para la ronda 1 debe ser NaN (sin historial previo)."""
         from src.features.build_qualifying_features import build_qualifying_features
         q = self._make_qualifying_df()
         feats = build_qualifying_features(q)
@@ -95,7 +95,7 @@ class TestQualifyingFeatures:
 
 
 class TestLeakageAudit:
-    """Tests for the leakage audit."""
+    """Pruebas para la auditoría de fuga de datos."""
 
     def test_forbidden_features_not_in_model_columns(self):
         from src.features.build_features_combined import MODEL_FEATURE_COLUMNS
@@ -108,7 +108,7 @@ class TestLeakageAudit:
     def test_audit_passes_cleanly(self):
         from src.evaluation.leakage_audit import run_leakage_audit, FORBIDDEN_FEATURES
         from src.features.build_features_combined import MODEL_FEATURE_COLUMNS
-        # Build a minimal synthetic features DataFrame
+        # Construir un DataFrame de características sintético mínimo
         df = pd.DataFrame({col: [0.0] for col in MODEL_FEATURE_COLUMNS})
         audit = run_leakage_audit(df)
         critical = audit[audit["status"].str.startswith("🚨")]

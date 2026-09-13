@@ -1,4 +1,4 @@
-"""Load and normalize raw Formula 1 race results from Jolpica JSON files."""
+"""Carga y normaliza los resultados en bruto de carreras de Fórmula 1 a partir de archivos JSON de Jolpica."""
 
 from __future__ import annotations
 
@@ -18,29 +18,29 @@ RESULT_COLUMNS = [
     "driver_id",
     "driver_code",
     "constructor_id",
-    "grid_position",      # starting grid position (from results endpoint)
-    "position_text",      # "1", "2", … or "R", "D", "W", "N", "F", "E"
-    "finish_position",    # numeric finish or NaN for DNFs
+    "grid_position",      # posición en la parrilla de salida (del endpoint de resultados)
+    "position_text",      # "1", "2", … o "R", "D", "W", "N", "F", "E"
+    "finish_position",    # posición final numérica o NaN para los que no terminaron (DNF)
     "points",
     "laps",
     "status",
-    "dnf",                # 1 if did not finish, 0 otherwise
-    "won",                # 1 if position_text == "1"
+    "dnf",                # 1 si no terminó la carrera, 0 en caso contrario
+    "won",                # 1 si position_text == "1"
 ]
 KEY_COLUMNS = ["season", "round", "driver_id"]
 
 
 def _result_files(season: int) -> list[Path]:
-    """Return all race result JSON files for *season* (sorted)."""
+    """Devuelve todos los archivos JSON de resultados de carreras para la temporada (*season*) (ordenados)."""
     season_dir = RAW_DIR / str(season) / "races"
     return sorted(season_dir.glob("results_offset_*.json"))
 
 
 def _normalize_result(race: dict, result: dict) -> dict:
-    """Flatten one nested Jolpica result entry into a plain dict."""
+    """Aplana una entrada anidada de resultado de Jolpica en un dict plano."""
     pos_text = result.get("positionText", "")
     finish_pos = pd.to_numeric(pos_text, errors="coerce")
-    # DNF: position text is not a number (R=Retired, D=Disqualified, etc.)
+    # DNF: el texto de posición no es un número (R=Retirado, D=Descalificado, etc.)
     dnf = 0 if pd.notna(finish_pos) else 1
     return {
         "season": int(race["season"]),
@@ -63,17 +63,17 @@ def _normalize_result(race: dict, result: dict) -> dict:
 
 
 def load_results(seasons: list[int]) -> pd.DataFrame:
-    """Load, normalize and deduplicate race results for the requested seasons.
+    """Carga, normaliza y desduplica los resultados de carreras para las temporadas solicitadas.
 
-    Parameters
+    Parámetros
     ----------
     seasons:
-        List of season years to load. Each must have raw data downloaded.
+        Lista de años de temporadas a cargar. Cada una debe tener sus datos en bruto descargados.
 
-    Returns
+    Retorna
     -------
     pd.DataFrame
-        One row per (season, round, driver) participation, sorted chronologically.
+        Una fila por participación (temporada, ronda, piloto), ordenada cronológicamente.
     """
     records: list[dict] = []
     for season in seasons:
@@ -91,7 +91,7 @@ def load_results(seasons: list[int]) -> pd.DataFrame:
 
 
 def save_processed_results(results: pd.DataFrame) -> Path:
-    """Save normalized results to the processed data directory."""
+    """Guarda los resultados normalizados en el directorio de datos procesados."""
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     out = PROCESSED_DIR / "race_results.csv"
     results.to_csv(out, index=False)
@@ -103,5 +103,4 @@ if __name__ == "__main__":
     seasons = list(range(HISTORY["start_year"], HISTORY["end_year"] + 1))
     df = load_results(seasons)
     path = save_processed_results(df)
-    print(f"Saved {len(df)} rows → {path}")
-
+    print(f"Saved {len(df)} rows -> {path}")

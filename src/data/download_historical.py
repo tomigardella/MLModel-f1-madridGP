@@ -1,8 +1,8 @@
-"""Download raw Formula 1 race results and qualifying data from Jolpica-F1 API.
+"""Descarga resultados de carreras y datos de clasificación en bruto de Fórmula 1 desde la API Jolpica-F1.
 
-Usage
+Uso
 -----
-    python -m src.data.download_historical                   # default 2018-2026
+    python -m src.data.download_historical                   # por defecto 2018-2026
     python -m src.data.download_historical --start-year 2021 --end-year 2026
     python -m src.data.download_historical --include-qualifying
 """
@@ -24,14 +24,14 @@ RETRY_WAIT_SEC = 3
 
 
 # ---------------------------------------------------------------------------
-# Low-level helpers
+# Funciones auxiliares de bajo nivel
 # ---------------------------------------------------------------------------
 
 def fetch_json(url: str, retries: int = 3) -> dict:
-    """Fetch one Jolpica API response, retrying on transient errors."""
+    """Obtiene una respuesta de la API de Jolpica, reintentando ante errores transitorios."""
     for attempt in range(1, retries + 1):
         try:
-            time.sleep(0.5)  # polite rate-limiting: Jolpica allows ~2 req/s
+            time.sleep(0.5)  # límite de tasa cortés: Jolpica permite ~2 req/s
             with urlopen(url, timeout=30) as response:
                 return json.load(response)
         except (HTTPError, URLError) as exc:
@@ -43,18 +43,18 @@ def fetch_json(url: str, retries: int = 3) -> dict:
 
 
 def save_json(payload: dict, path: Path) -> Path:
-    """Persist an API response exactly as received."""
+    """Persiste una respuesta de la API exactamente como se recibió."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return path
 
 
 # ---------------------------------------------------------------------------
-# Race results
+# Resultados de carreras
 # ---------------------------------------------------------------------------
 
 def download_race_results(season: int) -> list[Path]:
-    """Download paginated race results for *season* and return saved paths."""
+    """Descarga los resultados de carreras paginados para la temporada (*season*) y devuelve las rutas guardadas."""
     season_dir = RAW_DIR / str(season) / "races"
     saved: list[Path] = []
 
@@ -86,11 +86,11 @@ def download_race_results(season: int) -> list[Path]:
 
 
 # ---------------------------------------------------------------------------
-# Qualifying results
+# Resultados de clasificación
 # ---------------------------------------------------------------------------
 
 def download_qualifying_season(season: int) -> list[Path]:
-    """Download all qualifying results for *season*, one file per page."""
+    """Descarga todos los resultados de clasificación para la temporada (*season*), un archivo por página."""
     season_dir = RAW_DIR / str(season) / "qualifying"
     saved: list[Path] = []
 
@@ -122,11 +122,11 @@ def download_qualifying_season(season: int) -> list[Path]:
 
 
 # ---------------------------------------------------------------------------
-# Target race qualifying (single round)
+# Clasificación de la carrera objetivo (ronda individual)
 # ---------------------------------------------------------------------------
 
 def download_target_qualifying(year: int, round_: int) -> Path:
-    """Download qualifying results for a specific round of the target season."""
+    """Descarga los resultados de clasificación para una ronda específica de la temporada objetivo."""
     output = RAW_DIR / str(year) / "qualifying" / f"round_{round_:02d}_qualifying.json"
     if output.exists():
         print(f"    [skip] {output} already exists")
@@ -143,7 +143,7 @@ def download_target_qualifying(year: int, round_: int) -> Path:
 
 
 # ---------------------------------------------------------------------------
-# Season schedule
+# Calendario de la temporada
 # ---------------------------------------------------------------------------
 
 def download_schedule(season: int) -> Path:
@@ -155,7 +155,7 @@ def download_schedule(season: int) -> Path:
 
 
 # ---------------------------------------------------------------------------
-# CLI
+# CLI (Interfaz de línea de comandos)
 # ---------------------------------------------------------------------------
 
 def parse_args() -> argparse.Namespace:

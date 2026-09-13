@@ -1,11 +1,11 @@
-"""Combine race and qualifying features into the master dataset.
+"""Combina las características de carrera y de clasificación en el dataset principal.
 
-Joins race features (build_race_features) with qualifying features
-(build_qualifying_features) on (season, round, driver_id).
+Une las características de carrera (build_race_features) con las de clasificación
+(build_qualifying_features) sobre (season, round, driver_id).
 
-When qualifying data is missing for a given race (e.g., older seasons
-or rounds not yet in the API), qualifying columns are NaN.  The model
-handles these via median imputation.
+Cuando faltan datos de clasificación para una carrera determinada (ej., temporadas más antiguas
+o fechas aún no disponibles en la API), las columnas de clasificación contienen NaN. El modelo
+maneja estos casos mediante imputación por mediana.
 """
 
 from __future__ import annotations
@@ -19,10 +19,10 @@ from src.features.build_race_features import RACE_FEATURE_COLUMNS, build_race_fe
 from src.features.build_qualifying_features import QUALIFYING_FEATURE_COLUMNS, build_qualifying_features
 
 
-# Final feature columns used by the model
-# (excludes metadata and target — those are added explicitly)
+# Columnas de características finales utilizadas por el modelo
+# (excluye metadatos y la variable objetivo — esos se agregan explícitamente)
 MODEL_FEATURE_COLUMNS = [
-    # === Race history features ===
+    # === Características del historial de carreras ===
     "driver_career_starts_before",
     "driver_career_wins_before",
     "driver_career_points_before",
@@ -54,7 +54,7 @@ MODEL_FEATURE_COLUMNS = [
     "constructor_season_points_before",
     "constructor_season_wins_before",
     "constructor_season_position_before",
-    # === Qualifying features (new in this project) ===
+    # === Características de clasificación (nuevas en este proyecto) ===
     "qualifying_position",
     "gap_to_pole_sec",
     "driver_vs_teammate_q_gap_sec",
@@ -79,25 +79,25 @@ def build_combined_features(
     results: pd.DataFrame,
     qualifying: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Build and join race + qualifying features.
+    """Construye y une las características de carrera + clasificación.
 
-    Parameters
+    Parámetros
     ----------
     results:
-        From load_results().
+        Provenientes de load_results().
     qualifying:
-        From load_qualifying().
+        Provenientes de load_qualifying().
 
-    Returns
+    Retorna
     -------
     pd.DataFrame
-        One row per (season, round, driver), containing both race and
-        qualifying features, plus the `won` target.
+        Una fila por (season, round, driver), que contiene tanto las características de carrera
+        como las de clasificación, más la variable objetivo `won`.
     """
     race_feats = build_race_features(results)
     qual_feats = build_qualifying_features(qualifying)
 
-    # Keep only qualifying columns not already in race features
+    # Conservar únicamente las columnas de clasificación que no estén ya en las características de carrera
     q_cols = ["season", "round", "driver_id"] + [
         c for c in QUALIFYING_FEATURE_COLUMNS
         if c not in ("season", "round", "driver_id")
@@ -114,7 +114,7 @@ def build_combined_features(
 
 
 def save_combined_features(df: pd.DataFrame) -> Path:
-    """Persist the combined feature dataset."""
+    """Persiste el dataset de características combinadas."""
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     out = PROCESSED_DIR / "features_combined.csv"
     df.to_csv(out, index=False)

@@ -1,0 +1,42 @@
+feature,available_before_race,leakage_risk,decision,notes,status
+driver_career_starts_before,True,None,Include,Cumsum shifted by 1,✅ OK
+driver_career_wins_before,True,None,Include,Cumsum shifted by 1,✅ OK
+driver_career_points_before,True,None,Include,Cumsum shifted by 1,✅ OK
+driver_career_dnf_rate_before,True,None,Include,Expanding mean shifted by 1,✅ OK
+driver_season_points_before,True,None,Include,Cumsum shifted by 1 within season,✅ OK
+driver_season_wins_before,True,None,Include,Cumsum shifted by 1 within season,✅ OK
+driver_season_position_before,True,None,Include,Derived from points_before,✅ OK
+driver_season_dnf_rate_before,True,None,Include,Expanding mean shifted by 1,✅ OK
+driver_avg_finish_last_3,True,None,Include,Rolling(3) on shifted finish_position,✅ OK
+driver_avg_finish_last_5,True,None,Include,Rolling(5) on shifted finish_position,✅ OK
+driver_avg_finish_last_10,True,None,Include,Rolling(10) on shifted finish_position,✅ OK
+driver_win_rate_last_3,True,None,Include,Rolling(3) on shifted won,✅ OK
+driver_win_rate_last_5,True,None,Include,Rolling(5) on shifted won,✅ OK
+driver_win_rate_last_10,True,None,Include,Rolling(10) on shifted won,✅ OK
+driver_dnf_rate_last_3,True,None,Include,Rolling(3) on shifted dnf,✅ OK
+driver_dnf_rate_last_5,True,None,Include,Rolling(5) on shifted dnf,✅ OK
+driver_dnf_rate_last_10,True,None,Include,Rolling(10) on shifted dnf,✅ OK
+driver_circuit_starts_before,True,None,Include,Cumcount on circuit group,✅ OK
+driver_circuit_wins_before,True,None,Include,Cumsum shifted — 0 for new circuit,✅ OK
+driver_circuit_avg_finish_before,True,None,Include,Expanding mean shifted — NaN if new,✅ OK
+driver_circuit_dnf_rate_before,True,None,Include,Expanding mean shifted — NaN if new,✅ OK
+constructor_career_starts_before,True,None,Include,Cumcount on constructor,✅ OK
+constructor_career_wins_before,True,None,Include,Cumsum shifted by 1,✅ OK
+constructor_career_points_before,True,None,Include,Cumsum shifted by 1,✅ OK
+constructor_avg_finish_last_3,True,None,Include,Rolling(3) on shifted finish,✅ OK
+constructor_avg_finish_last_5,True,None,Include,Rolling(5) on shifted finish,✅ OK
+constructor_win_rate_last_3,True,None,Include,Rolling(3) on shifted wins,✅ OK
+constructor_win_rate_last_5,True,None,Include,Rolling(5) on shifted wins,✅ OK
+constructor_season_points_before,True,None,Include,Cumsum shifted within season,✅ OK
+constructor_season_wins_before,True,None,Include,Cumsum shifted within season,✅ OK
+constructor_season_position_before,True,None,Include,Derived from season_points_before,✅ OK
+qualifying_position,True,None,Include,From Saturday qualifying — pre-race,✅ OK
+gap_to_pole_sec,True,None,Include,Derived from qualifying times only,✅ OK
+driver_vs_teammate_q_gap_sec,True,None,Include,Both times from same qualifying session,✅ OK
+team_best_qualifying_pos,True,None,Include,From Saturday qualifying,✅ OK
+qualifying_session_numeric,True,None,Include,Q1/Q2/Q3 ordinal — from qualifying,✅ OK
+driver_avg_qualifying_last_3,True,None,Include,Rolling(3) on shifted qualifying_position,✅ OK
+driver_avg_qualifying_last_5,True,None,Include,Rolling(5) on shifted qualifying_position,✅ OK
+driver_avg_q_gap_to_pole_last_3,True,None,Include,Rolling(3) on shifted gap_to_pole,✅ OK
+driver_avg_q_gap_to_pole_last_5,True,None,Include,Rolling(5) on shifted gap_to_pole,✅ OK
+driver_season_avg_qualifying_before,True,None,Include,Expanding mean shifted — within season,✅ OK

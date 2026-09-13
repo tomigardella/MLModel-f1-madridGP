@@ -1,15 +1,15 @@
-"""Naïve baseline models for benchmarking.
+"""Modelos de línea base ingenuos (naïve baselines) para evaluación comparativa.
 
-Two baselines are defined:
-  1. Qualifying Position Baseline:
-     Winner = driver with best qualifying position (P1 always wins).
-     No model training needed.
+Se definen dos líneas base:
+  1. Línea base de posición de clasificación:
+     Ganador = piloto con la mejor posición de clasificación (P1 siempre gana).
+     No requiere entrenamiento de modelo.
   
-  2. Historical Win Rate Baseline:
-     Winner = driver with highest career win rate (computed before the race).
-     No ML — pure lookup.
+  2. Línea base de tasa de victorias histórica:
+     Ganador = piloto con la mayor tasa de victorias en su carrera (calculada antes de la carrera).
+     Sin ML — búsqueda directa.
 
-These establish the floor: any ML model must beat both to add value.
+Estas establecen el umbral mínimo: cualquier modelo de ML debe superar a ambas para aportar valor.
 """
 
 from __future__ import annotations
@@ -20,13 +20,13 @@ from src.features.build_features_combined import MODEL_FEATURE_COLUMNS
 
 
 def evaluate_qualifying_baseline(features: pd.DataFrame) -> dict:
-    """Evaluate: does the pole-sitter always win?
+    """Evalúa: ¿el piloto en pole position siempre gana?
 
-    Groups by race and checks if the driver with qualifying_position == 1
-    corresponds to the actual winner.
+    Agrupa por carrera y verifica si el piloto con qualifying_position == 1
+    corresponde al ganador real.
     
-    Handles races with missing qualifying data (older seasons) by falling
-    back to grid_position if available.
+    Maneja carreras con datos de clasificación faltantes (temporadas más antiguas) recurriendo
+    a grid_position si está disponible.
     """
     valid = features.dropna(subset=["won"]).copy()
     valid = valid[valid["qualifying_position"].notna() | valid["won"].notna()]
@@ -35,7 +35,7 @@ def evaluate_qualifying_baseline(features: pd.DataFrame) -> dict:
     for (season, round_), group in valid.groupby(["season", "round"]):
         q_col = "qualifying_position"
         if group[q_col].isna().all():
-            continue  # skip races with no qualifying data
+            continue  # omitir carreras sin datos de clasificación
         predicted_winner = group.loc[group[q_col].idxmin(), "driver_id"]
         actual_winner_rows = group[group["won"] == 1]
         if actual_winner_rows.empty:
@@ -60,9 +60,9 @@ def evaluate_qualifying_baseline(features: pd.DataFrame) -> dict:
 
 
 def evaluate_win_rate_baseline(features: pd.DataFrame) -> dict:
-    """Evaluate: does the driver with the highest career win rate win?
+    """Evalúa: ¿gana el piloto con la mayor tasa de victorias en su carrera?
 
-    Uses driver_career_wins_before / driver_career_starts_before as the score.
+    Utiliza driver_career_wins_before / driver_career_starts_before como puntuación.
     """
     valid = features.dropna(subset=["won"]).copy()
     valid["career_win_rate"] = (

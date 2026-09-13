@@ -1,0 +1,7 @@
+model,log_loss,brier_score,roc_auc,winner_accuracy,n_races
+gradient_boosting,0.105729,0.033656,0.963828,0.5833,24
+xgboost,0.133131,0.044111,0.955495,0.5,24
+random_forest,0.137849,0.041068,0.960714,0.4167,24
+catboost,0.14382,0.045625,0.961081,0.625,24
+lightgbm,0.170953,0.057392,0.952106,0.4167,24
+logistic_regression,0.270624,0.092777,0.964103,0.5417,24

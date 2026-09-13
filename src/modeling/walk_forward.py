@@ -1,11 +1,11 @@
-"""Walk-forward temporal validation across historical seasons.
+"""Validación temporal walk-forward a lo largo de las temporadas históricas.
 
-For each validation season V in [walk_forward_start, walk_forward_end]:
-  - Train on all seasons BEFORE V (expanding window)
-  - Evaluate on season V
+Para cada temporada de validación V en [walk_forward_start, walk_forward_end]:
+  - Entrenar en todas las temporadas ANTERIORES a V (ventana expansiva)
+  - Evaluar en la temporada V
 
-This simulates how the model would have performed if deployed in real time,
-with no information from the future leaking into training.
+Esto simula cómo se habría desempeñado el modelo de haberse implementado en tiempo real,
+sin que la información del futuro se filtre en el entrenamiento.
 """
 
 from __future__ import annotations
@@ -24,19 +24,19 @@ def run_walk_forward(
     features: pd.DataFrame,
     feature_columns: list[str] | None = None,
 ) -> pd.DataFrame:
-    """Run expanding-window walk-forward validation.
+    """Ejecuta la validación walk-forward con ventana expansiva.
 
-    Parameters
+    Parámetros
     ----------
     features:
-        Combined feature dataset from build_combined_features().
+        Conjunto de datos de características combinadas de build_combined_features().
     feature_columns:
-        Which columns to use as model inputs. Defaults to MODEL_FEATURE_COLUMNS.
+        Qué columnas usar como entradas del modelo. Por defecto es MODEL_FEATURE_COLUMNS.
 
-    Returns
+    Retorna
     -------
-    pd.DataFrame with columns: model, validation_season, log_loss, brier_score,
-                                roc_auc, winner_accuracy, n_races
+    pd.DataFrame con columnas: model, validation_season, log_loss, brier_score,
+                               roc_auc, winner_accuracy, n_races
     """
     if feature_columns is None:
         feature_columns = MODEL_FEATURE_COLUMNS
@@ -74,7 +74,7 @@ def run_walk_forward(
 
 
 def summarize_walk_forward(wf: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate walk-forward results by model (mean across validation seasons)."""
+    """Agrega los resultados de walk-forward por modelo (promedio a través de las temporadas de validación)."""
     return (
         wf.groupby("model")[["log_loss", "brier_score", "roc_auc", "winner_accuracy"]]
         .mean()

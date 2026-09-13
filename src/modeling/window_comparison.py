@@ -1,13 +1,13 @@
-"""Compare model performance across different historical data windows.
+"""Compara el rendimiento de los modelos a través de diferentes ventanas de datos históricos.
 
-Trains and evaluates each model using 4 historical window sizes:
-  - 3yr:  last 3 seasons
-  - 5yr:  last 5 seasons
-  - 7yr:  last 7 seasons
-  - all:  full history (2018–present)
+Entrena y evalúa cada modelo usando 4 tamaños de ventana histórica:
+  - 3yr:  últimas 3 temporadas
+  - 5yr:  últimas 5 temporadas
+  - 7yr:  últimas 7 temporadas
+  - all:  historial completo (2018–presente)
 
-For each window, walk-forward validation is run on 2023–2025.
-This answers: does more historical data always help?
+Para cada ventana, se ejecuta validación walk-forward en 2023–2025.
+Esto responde a: ¿más datos históricos siempre ayudan?
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from src.modeling.walk_forward import run_walk_forward, summarize_walk_forward
 
 
 def run_window_comparison(features: pd.DataFrame) -> pd.DataFrame:
-    """Run walk-forward for each historical window, return combined results."""
+    """Ejecuta walk-forward para cada ventana histórica y retorna los resultados combinados."""
     all_results: list[pd.DataFrame] = []
 
     for window_label, start_year in WINDOWS.items():
@@ -40,7 +40,7 @@ def run_window_comparison(features: pd.DataFrame) -> pd.DataFrame:
 
 
 def summarize_window_comparison(results: pd.DataFrame) -> pd.DataFrame:
-    """Mean metrics per (window, model) sorted by log_loss."""
+    """Métricas promedio por (ventana, modelo) ordenadas por log_loss."""
     return (
         results.groupby(["window", "model"])[
             ["log_loss", "brier_score", "roc_auc", "winner_accuracy"]
@@ -59,7 +59,7 @@ def save_window_comparison(results: pd.DataFrame) -> Path:
 
 
 def best_window(summary: pd.DataFrame) -> str:
-    """Return the window label with the best mean log_loss."""
+    """Retorna la etiqueta de ventana con el mejor log_loss promedio."""
     mean_by_window = (
         summary.groupby("window")["log_loss"].mean().sort_values()
     )
